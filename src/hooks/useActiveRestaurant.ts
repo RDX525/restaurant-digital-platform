@@ -11,31 +11,57 @@ export type ActiveRestaurant = {
   permissions: string[];
 };
 
-export function useActiveRestaurant() {
-  const [restaurant, setRestaurant] = useState<ActiveRestaurant | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+let cachedRestaurant: ActiveRestaurant | null = null;
+let inflight: Promise<ActiveRestaurant> | null = null;
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/restaurants/active");
+async function fetchActiveRestaurant(force: boolean): Promise<ActiveRestaurant> {
+  if (!force && cachedRestaurant) return cachedRestaurant;
+  if (!force && inflight) return inflight;
+
+  inflight = fetch("/api/restaurants/active")
+    .then(async (response) => {
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to load restaurant.");
       }
-      setRestaurant(payload as ActiveRestaurant);
+      cachedRestaurant = payload as ActiveRestaurant;
+      return cachedRestaurant;
+    })
+    .finally(() => {
+      inflight = null;
+    });
+
+  return inflight;
+}
+
+export function useActiveRestaurant() {
+  const [restaurant, setRestaurant] = useState<ActiveRestaurant | null>(cachedRestaurant);
+  const [loading, setLoading] = useState(!cachedRestaurant);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async (force = false) => {
+    if (!force && cachedRestaurant) {
+      setRestaurant(cachedRestaurant);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const next = await fetchActiveRestaurant(force);
+      setRestaurant(next);
     } catch (err) {
       setError(getErrorMessage(err));
       setRestaurant(null);
+      cachedRestaurant = null;
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void reload();
+    void reload(false);
   }, [reload]);
 
   return {
@@ -47,6 +73,6 @@ export function useActiveRestaurant() {
     hasPermission: (permission: string) => restaurant?.permissions.includes(permission) ?? false,
     loading,
     error,
-    reload,
+    reload: () => reload(true),
   };
 }

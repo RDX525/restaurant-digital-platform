@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useIntervalWhenVisible } from "@/hooks/useIntervalWhenVisible";
 import {
   CalendarDays,
   CheckCircle2,
@@ -146,9 +147,9 @@ export function ReservationsDashboard() {
     if (!restaurantId) return;
     void loadReservations();
     void loadSettings();
-    const timer = window.setInterval(() => void loadReservations(), POLL_INTERVAL_MS);
-    return () => window.clearInterval(timer);
   }, [loadReservations, loadSettings, restaurantId]);
+
+  useIntervalWhenVisible(loadReservations, restaurantId ? POLL_INTERVAL_MS : null);
 
   const calendarDays = useMemo(() => buildCalendarDays(reservations), [reservations]);
 

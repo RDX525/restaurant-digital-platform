@@ -32,7 +32,7 @@ export function trackAnalyticsEvent(input: ClientAnalyticsEventInput): void {
       menuItemId: input.menuItemId,
       metadata: input.metadata,
     }),
-  });
+  }).catch(() => undefined);
 }
 
 export function trackAnalyticsEventOnce(

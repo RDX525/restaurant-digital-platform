@@ -184,7 +184,7 @@ function ModifierModal({
         aria-modal="true"
         aria-labelledby="modifier-modal-title"
       >
-        <div className="sticky top-0 flex items-start justify-between border-b border-pine-900/5 bg-white/95 px-5 py-4 backdrop-blur-sm">
+        <div className="sticky top-0 flex items-start justify-between border-b border-pine-900/5 bg-white px-5 py-4">
           <div>
             <p className="eyebrow">Customise</p>
             <h2 id="modifier-modal-title" className="font-display text-2xl text-pine-900">
@@ -286,7 +286,7 @@ function ModifierModal({
           {error ? <div className="alert-error">{error}</div> : null}
         </div>
 
-        <div className="sticky bottom-0 border-t border-pine-900/5 bg-white/95 px-5 py-4 backdrop-blur-sm">
+        <div className="sticky bottom-0 border-t border-pine-900/5 bg-white px-5 py-4">
           <button type="button" onClick={handleConfirm} className="btn-primary w-full py-3">
             Add {quantity} to order · {formatPrice(lineTotal)}
           </button>

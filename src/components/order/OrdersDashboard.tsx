@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useIntervalWhenVisible } from "@/hooks/useIntervalWhenVisible";
 import {
   CheckCircle2,
   ChefHat,
@@ -81,9 +82,9 @@ export function OrdersDashboard() {
   useEffect(() => {
     if (!restaurantId) return;
     void loadOrders();
-    const timer = window.setInterval(() => void loadOrders(), POLL_INTERVAL_MS);
-    return () => window.clearInterval(timer);
   }, [loadOrders, restaurantId]);
+
+  useIntervalWhenVisible(loadOrders, restaurantId ? POLL_INTERVAL_MS : null);
 
   async function refundOrder(order: PlacedOrder) {
     if (!confirm(`Refund ${order.orderNumber}?`)) return;

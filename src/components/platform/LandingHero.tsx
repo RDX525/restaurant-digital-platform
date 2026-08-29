@@ -74,15 +74,15 @@ export function LandingHero() {
       </section>
 
       <section className="relative overflow-hidden bg-pine-950 px-6 py-8 text-white lg:hidden">
-        <HeroBackground />
+        <HeroBackground animated={false} />
         <div className="relative z-10">
           <BrandMark />
-          <div className="mt-6 animate-slide-up">
-            <LiveBadge />
+          <div className="mt-6">
+            <LiveBadge pulse={false} />
             <HeroCopy compact />
             <HeroActions compact />
           </div>
-          <div className="mt-8 animate-slide-up stagger-2">
+          <div className="mt-8">
             <ProductPreviewMockup compact />
           </div>
         </div>
@@ -91,20 +91,20 @@ export function LandingHero() {
   );
 }
 
-function HeroBackground() {
+function HeroBackground({ animated = true }: { animated?: boolean }) {
   return (
     <>
       <div
-        className="pointer-events-none absolute inset-0 bg-aurora animate-aurora opacity-90"
+        className={`pointer-events-none absolute inset-0 bg-aurora opacity-90 ${animated ? "animate-aurora" : ""}`}
         aria-hidden="true"
       />
       <div className="grain pointer-events-none absolute inset-0 opacity-35" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute -right-20 top-10 h-[480px] w-[480px] rounded-full bg-gold-500/15 blur-3xl animate-glow-pulse"
+        className={`pointer-events-none absolute -right-20 top-10 h-[480px] w-[480px] rounded-full bg-gold-500/15 ${animated ? "blur-3xl animate-glow-pulse" : "blur-xl"}`}
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -left-32 bottom-0 h-[420px] w-[420px] rounded-full bg-pine-500/25 blur-3xl"
+        className={`pointer-events-none absolute -left-32 bottom-0 h-[420px] w-[420px] rounded-full bg-pine-500/25 ${animated ? "blur-3xl" : "blur-xl"}`}
         aria-hidden="true"
       />
       <div
@@ -119,11 +119,13 @@ function HeroBackground() {
   );
 }
 
-function LiveBadge() {
+function LiveBadge({ pulse = true }: { pulse?: boolean }) {
   return (
-    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/25 bg-gold-500/10 px-3 py-1.5 backdrop-blur-sm">
+    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/25 bg-gold-500/10 px-3 py-1.5">
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-60" />
+        {pulse ? (
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-60" />
+        ) : null}
         <span className="relative inline-flex h-2 w-2 rounded-full bg-gold-400" />
       </span>
       <span className="max-w-[min(100%,18rem)] text-[11px] font-semibold uppercase leading-snug tracking-[0.14em] text-gold-300 sm:max-w-none sm:tracking-[0.18em]">
@@ -188,7 +190,7 @@ function HeroActions({ compact = false }: { compact?: boolean }) {
       </Link>
       <Link
         href="/?mode=sign-up"
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10 touch-manipulation"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/10 touch-manipulation"
       >
         Start free
       </Link>
@@ -215,7 +217,7 @@ function FeaturePills() {
       {FEATURES.map(({ icon: Icon, title }) => (
         <li
           key={title}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-pine-200 backdrop-blur-sm"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-pine-200"
         >
           <Icon className="h-3.5 w-3.5 text-gold-400" aria-hidden="true" />
           {title}
@@ -231,10 +233,10 @@ function ProductPreviewMockup({ compact = false }: { compact?: boolean }) {
       className={`relative ${compact ? "mx-auto w-full max-w-sm" : "w-full max-w-md xl:max-w-lg animate-float"}`}
     >
       <div
-        className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-gold-500/10 blur-2xl"
+        className={`pointer-events-none absolute -inset-4 rounded-[2rem] bg-gold-500/10 ${compact ? "" : "blur-2xl"}`}
         aria-hidden="true"
       />
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-pine-900/80 shadow-elevated backdrop-blur-xl ring-1 ring-white/10">
+      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-pine-900/80 shadow-elevated ring-1 ring-white/10">
         <div className="flex items-center gap-2 border-b border-white/10 bg-pine-950/60 px-4 py-3">
           <div className="flex gap-1.5" aria-hidden="true">
             <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />

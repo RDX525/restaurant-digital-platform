@@ -63,13 +63,17 @@ async function loadRestaurantBySlugImpl(
   }
 }
 
+const SHARED_GALLERY_LIMIT = 50;
+
 export const loadRestaurantBySlug = cache(
   async (
     slug: string,
     includeUnpublished = false,
-    galleryLimit?: number,
   ): Promise<PublicRestaurant | null> => {
-    return loadRestaurantBySlugImpl(slug, { includeUnpublished, galleryLimit });
+    return loadRestaurantBySlugImpl(slug, {
+      includeUnpublished,
+      galleryLimit: SHARED_GALLERY_LIMIT,
+    });
   },
 );
 

@@ -26,9 +26,14 @@ export async function getPublicRestaurant(
   const { slug } = await params;
   const preview = await isPreviewEnabled(searchParams);
 
-  const restaurant = await loadRestaurantBySlug(slug, preview, options?.galleryLimit);
+  const restaurant = await loadRestaurantBySlug(slug, preview);
 
   if (!restaurant) notFound();
+
+  if (options?.galleryLimit != null) {
+    return { ...restaurant, gallery: restaurant.gallery.slice(0, options.galleryLimit) };
+  }
+
   return restaurant;
 }
 
