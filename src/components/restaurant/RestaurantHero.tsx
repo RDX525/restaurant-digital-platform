@@ -18,7 +18,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
   );
 
   return (
-    <section className="relative min-h-[85vh] overflow-hidden">
+    <section className="relative min-h-[70svh] overflow-hidden sm:min-h-[85dvh]">
       <div className="absolute inset-0">
         {restaurant.hero_image_url ? (
           <Image
@@ -44,7 +44,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-[85vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-28 text-white sm:px-6 sm:pb-20">
+      <div className="relative mx-auto flex min-h-[70svh] max-w-6xl flex-col justify-end px-4 pb-12 pt-24 text-white sm:min-h-[85dvh] sm:px-6 sm:pb-20 sm:pt-28">
         {restaurant.logo_url ? (
           <Image
             src={restaurant.logo_url}
@@ -63,7 +63,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
           </p>
         ) : null}
 
-        <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+        <h1 className="mt-4 max-w-4xl break-words font-display text-4xl leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
           {restaurant.name}
         </h1>
 

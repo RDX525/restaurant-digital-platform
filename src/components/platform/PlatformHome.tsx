@@ -57,7 +57,7 @@ export function PlatformHome() {
               Website settings
             </Link>
             <Link
-              href="/r/demo-restaurant"
+              href="/r/harbour-kitchen"
               className="btn-ghost px-6 py-3 text-base text-pine-200 hover:bg-white/5 hover:text-white"
             >
               View demo

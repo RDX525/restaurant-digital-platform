@@ -50,7 +50,9 @@ export function validateProductionEnvironment(): ProductionValidationResult {
   }
 
   if (getPaymentProviderName() === "demo") {
-    errors.push("PAYMENT_PROVIDER must not be 'demo' in production.");
+    warnings.push(
+      "PAYMENT_PROVIDER is 'demo'. Checkout uses simulated payments — set PAYMENT_PROVIDER=stripe for live charges.",
+    );
   } else if (getPaymentProviderName() === "stripe") {
     if (!process.env.STRIPE_SECRET_KEY?.trim()) {
       errors.push("STRIPE_SECRET_KEY must be set when PAYMENT_PROVIDER=stripe.");

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Globe,
@@ -15,7 +16,9 @@ import {
   ChevronLeft,
   ExternalLink,
   LogOut,
+  Menu,
   UserCog,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
@@ -52,7 +55,21 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { restaurantSlug, hasPermission, loading: restaurantLoading } = useActiveRestaurant();
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileNavOpen]);
 
   const visibleNav = NAV.filter((item) => {
     if (restaurantLoading) return true;
@@ -69,7 +86,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="min-h-screen bg-cream-100 lg:flex">
+    <div className="min-h-dvh bg-cream-100 lg:flex">
       <aside className="bg-brand-surface relative hidden w-[17.5rem] shrink-0 flex-col lg:flex">
         <div className="grain pointer-events-none absolute inset-0 z-[1] opacity-30" aria-hidden="true" />
         <div className="relative z-10 border-b border-white/5 px-6 py-7">
@@ -136,28 +153,73 @@ export function DashboardShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col dashboard-bg">
-        <header className="sticky top-0 z-30 border-b border-pine-900/5 glass lg:hidden">
-          <div className="flex items-center justify-between px-4 py-3">
+        <header
+          className="sticky top-0 z-30 border-b border-pine-900/5 glass lg:hidden"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
             <Link href="/dashboard/menus" className="font-display text-lg text-pine-900">
               Kāti
             </Link>
-            <div className="flex gap-1">
-              {visibleNav.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
-                    pathname.startsWith(href)
-                      ? "nav-gradient-active"
-                      : "text-pine-600 hover:bg-white/80",
-                  )}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
+            <button
+              type="button"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-pine-800 touch-manipulation hover:bg-white/80"
+              aria-expanded={mobileNavOpen}
+              aria-controls="dashboard-mobile-nav"
+              onClick={() => setMobileNavOpen((open) => !open)}
+            >
+              {mobileNavOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+              <span className="sr-only">{mobileNavOpen ? "Close menu" : "Open menu"}</span>
+            </button>
           </div>
+          {mobileNavOpen ? (
+            <nav
+              id="dashboard-mobile-nav"
+              className="max-h-[min(70dvh,32rem)] overflow-y-auto border-t border-pine-900/5 bg-white/95 px-3 py-3"
+              aria-label="Dashboard"
+            >
+              {visibleNav.map(({ href, label, icon: Icon, description }) => {
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-2xl px-3 py-3",
+                      active ? "nav-gradient-active" : "text-pine-700 hover:bg-cream-50",
+                    )}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>
+                      <span className="block text-sm font-semibold">{label}</span>
+                      <span className="block text-xs text-pine-500">{description}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+              <div className="mt-2 space-y-1 border-t border-pine-900/5 pt-2">
+                {restaurantSlug ? (
+                  <Link
+                    href={`/r/${restaurantSlug}`}
+                    target="_blank"
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-pine-700"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    View site
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-pine-700"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  Sign out
+                </button>
+              </div>
+            </nav>
+          ) : null}
         </header>
 
         <div className="platform-header-bar px-4 py-5 sm:px-8">

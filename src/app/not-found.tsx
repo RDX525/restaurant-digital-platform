@@ -17,7 +17,7 @@ export default function NotFound() {
             <Home className="h-4 w-4" />
             Back to sign in
           </Link>
-          <Link href="/r/demo-restaurant" className="btn-secondary">
+          <Link href="/r/harbour-kitchen" className="btn-secondary">
             View demo
             <ArrowRight className="h-4 w-4" />
           </Link>

@@ -46,9 +46,9 @@ const TRUST_STATS = [
 export function LandingHero() {
   return (
     <>
-      <section className="bg-brand-surface bg-brand-surface--animated relative hidden min-h-screen overflow-hidden text-white lg:flex lg:flex-col">
+      <section className="bg-brand-surface bg-brand-surface--animated relative hidden min-h-dvh overflow-hidden text-white lg:flex lg:flex-col">
         <HeroBackground />
-        <div className="relative z-10 flex min-h-screen flex-col px-8 py-8 xl:px-12 xl:py-10">
+        <div className="relative z-10 flex min-h-dvh flex-col px-8 py-8 xl:px-12 xl:py-10">
           <div className="animate-slide-up opacity-0">
             <BrandMark />
           </div>
@@ -126,7 +126,7 @@ function LiveBadge() {
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-60" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-gold-400" />
       </span>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+      <span className="max-w-[min(100%,18rem)] text-[11px] font-semibold uppercase leading-snug tracking-[0.14em] text-gold-300 sm:max-w-none sm:tracking-[0.18em]">
         The platform for modern NZ dining
       </span>
     </div>
@@ -145,7 +145,7 @@ function BrandMark() {
       </div>
       <div>
         <span className="font-display text-2xl tracking-tight">Kāti</span>
-        <span className="ml-2 text-[10px] uppercase tracking-[0.24em] text-pine-400">
+        <span className="ml-2 hidden text-[10px] uppercase tracking-[0.24em] text-pine-400 min-[400px]:inline">
           Aotearoa NZ
         </span>
       </div>
@@ -178,17 +178,17 @@ function HeroCopy({ compact }: { compact: boolean }) {
 
 function HeroActions({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${compact ? "mt-5" : "mt-7"}`}>
+    <div className={`flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center ${compact ? "mt-5" : "mt-7"}`}>
       <Link
-        href="/r/demo-restaurant"
-        className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 text-sm font-semibold text-pine-950 shadow-glow transition hover:brightness-105 active:scale-[0.98]"
+        href="/r/harbour-kitchen"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 text-sm font-semibold text-pine-950 shadow-glow transition hover:brightness-105 active:scale-[0.98] touch-manipulation"
       >
         Explore live demo
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
       <Link
         href="/?mode=sign-up"
-        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:border-white/25 hover:bg-white/10 touch-manipulation"
       >
         Start free
       </Link>

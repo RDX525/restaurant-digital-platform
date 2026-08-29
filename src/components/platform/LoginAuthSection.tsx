@@ -26,14 +26,17 @@ function LoginAuthContent() {
 
 export function LoginAuthSection() {
   return (
-    <section className="relative flex min-h-screen flex-col overflow-hidden bg-mesh-light lg:border-l lg:border-pine-900/5">
+    <section className="relative flex min-h-dvh flex-col overflow-hidden bg-mesh-light lg:border-l lg:border-pine-900/5">
       <AuthPanelBackground />
-      <header className="relative z-10 flex items-center justify-between px-5 py-4 lg:justify-end lg:px-6 lg:py-5">
-        <Link href="/r/demo-restaurant" className="landing-demo-pill lg:hidden">
+      <header
+        className="relative z-10 flex items-center justify-between px-5 py-4 lg:justify-end lg:px-6 lg:py-5"
+        style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+      >
+        <Link href="/r/harbour-kitchen" className="landing-demo-pill lg:hidden">
           View demo
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
-        <Link href="/r/demo-restaurant" className="landing-demo-pill hidden lg:inline-flex">
+        <Link href="/r/harbour-kitchen" className="landing-demo-pill hidden lg:inline-flex">
           Explore live demo
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>

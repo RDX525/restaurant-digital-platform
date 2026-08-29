@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <LandingHero />
       <LoginAuthSection />
     </div>

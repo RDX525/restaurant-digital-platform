@@ -29,7 +29,7 @@ describe("validateProductionEnvironment", () => {
     expect(result.errors.some((error) => error.includes("Supabase"))).toBe(true);
   });
 
-  it("fails in production when payment provider is demo", () => {
+  it("warns in production when payment provider is demo", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc123.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "eyJhbGci.test");
@@ -39,8 +39,8 @@ describe("validateProductionEnvironment", () => {
     vi.stubEnv("PAYMENT_PROVIDER", "demo");
 
     const result = validateProductionEnvironment();
-    expect(result.ok).toBe(false);
-    expect(result.errors.some((error) => error.includes("PAYMENT_PROVIDER"))).toBe(true);
+    expect(result.ok).toBe(true);
+    expect(result.warnings.some((warning) => warning.includes("PAYMENT_PROVIDER"))).toBe(true);
   });
 
   it("warns when notification provider is demo", () => {

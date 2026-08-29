@@ -15,6 +15,9 @@
 @layer base {
   html {
     scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -35,7 +38,9 @@
   }
 
   body {
-    @apply bg-cream-100 font-sans text-pine-900 antialiased;
+    @apply min-h-dvh bg-cream-100 font-sans text-pine-900 antialiased;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     background-image: radial-gradient(
       at 50% 0%,
       rgba(201, 169, 98, 0.05) 0px,
@@ -98,7 +103,7 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-primary {
@@ -121,8 +126,9 @@
     @apply btn font-medium text-pine-700 hover:bg-pine-900/5;
   }
 
-  .input {
-    @apply w-full rounded-xl border border-pine-900/10 bg-white px-4 py-2.5 text-sm text-pine-900 shadow-inset placeholder:text-pine-400 outline-none transition focus:border-pine-500 focus:ring-2 focus:ring-pine-500/15;
+  .input,
+  .input-field {
+    @apply w-full rounded-xl border border-pine-900/10 bg-white px-4 py-2.5 text-base text-pine-900 shadow-inset placeholder:text-pine-400 outline-none transition focus:border-pine-500 focus:ring-2 focus:ring-pine-500/15 sm:text-sm;
   }
 
   .label {
@@ -218,7 +224,7 @@
   }
 
   .platform-page {
-    @apply min-h-screen bg-mesh-light;
+    @apply min-h-dvh bg-mesh-light;
   }
 
   .platform-header-bar {
@@ -231,6 +237,19 @@
 
   .platform-modal-backdrop {
     @apply fixed inset-0 z-50 flex items-end justify-center bg-pine-950/75 p-4 sm:items-center;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .scroll-x-touch {
+    @apply overflow-x-auto overscroll-x-contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .scroll-x-touch::-webkit-scrollbar {
+    display: none;
   }
 
   @supports (backdrop-filter: blur(8px)) {

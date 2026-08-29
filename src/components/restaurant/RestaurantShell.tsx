@@ -68,7 +68,7 @@ function RestaurantShellContent({
   }, [restaurant.slug, pathname]);
 
   return (
-    <div className="min-h-screen bg-mesh-light text-pine-900">
+    <div className="min-h-dvh bg-mesh-light text-pine-900">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"
@@ -76,8 +76,11 @@ function RestaurantShellContent({
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-pine-900/5 glass">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+      <header
+        className="sticky top-0 z-40 border-b border-pine-900/5 glass"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
           <Link href={base || "/"} className="flex min-w-0 items-center gap-3">
             {restaurant.logo_url ? (
               <Image
@@ -139,7 +142,7 @@ function RestaurantShellContent({
               <CalendarDays className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Reserve
             </Link>
-            <Link href={orderHref} className="btn-accent relative rounded-full px-4 py-2.5">
+            <Link href={orderHref} className="btn-accent relative rounded-full px-3 py-2.5 sm:px-4">
               <ShoppingBag className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Order
               {itemCount > 0 ? (
@@ -152,7 +155,7 @@ function RestaurantShellContent({
         </div>
 
         <nav
-          className="flex gap-2 overflow-x-auto border-t border-pine-900/5 px-4 py-2.5 lg:hidden"
+          className="scroll-x-touch flex gap-2 border-t border-pine-900/5 px-4 py-2.5 lg:hidden"
           aria-label="Mobile"
         >
           {NAV_ITEMS.map((item) => {
@@ -168,7 +171,7 @@ function RestaurantShellContent({
                 key={item.href}
                 href={href}
                 className={cn(
-                  "whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition",
+                  "whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-medium transition shrink-0",
                   active ? "nav-gradient-active" : "bg-white text-pine-600 ring-1 ring-pine-900/5",
                 )}
               >
@@ -243,7 +246,10 @@ function RestaurantShellContent({
             </div>
           </div>
         </div>
-        <div className="relative z-10 border-t border-white/10 px-4 py-5 text-center text-xs text-white/40">
+        <div
+          className="relative z-10 border-t border-white/10 px-4 py-5 text-center text-xs text-white/40"
+          style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
+        >
           <p>
             © {new Date().getFullYear()} {restaurant.name}
           </p>
