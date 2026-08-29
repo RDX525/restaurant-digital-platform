@@ -51,15 +51,12 @@ export function TableSessionProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    const run = () => {
+    const timeoutId = window.setTimeout(() => {
       void refresh();
+    }, 1);
+    return () => {
+      window.clearTimeout(timeoutId);
     };
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(run);
-      return () => window.cancelIdleCallback(idleId);
-    }
-    const timeoutId = window.setTimeout(run, 1);
-    return () => window.clearTimeout(timeoutId);
   }, [refresh]);
 
   const value = useMemo(
