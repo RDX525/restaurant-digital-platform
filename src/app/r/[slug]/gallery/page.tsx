@@ -1,0 +1,40 @@
+import { getPublicRestaurant } from "@/lib/restaurant/page-data";
+import { buildRestaurantMetadata } from "@/lib/restaurant/seo";
+import { GalleryGrid } from "@/components/restaurant/GalleryGrid";
+import { StructuredData } from "@/components/restaurant/StructuredData";
+import { PageHeader } from "@/components/restaurant/PageHeader";
+import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
+
+export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params, searchParams);
+  return buildRestaurantMetadata(restaurant, {
+    title: `Gallery | ${restaurant.name}`,
+    description: `Photos from ${restaurant.name}.`,
+    path: "gallery",
+  });
+}
+
+export default async function GalleryPage({ params, searchParams }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params, searchParams, { galleryLimit: 50 });
+
+  return (
+    <>
+      <StructuredData
+        restaurant={restaurant}
+        breadcrumbs={[
+          { name: "Home", path: "" },
+          { name: "Gallery", path: "gallery" },
+        ]}
+      />
+      <PageHeader
+        restaurant={restaurant}
+        eyebrow="Gallery"
+        title="A look inside"
+        description={`The atmosphere, food, and people that make ${restaurant.name} special.`}
+      />
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <GalleryGrid images={restaurant.gallery} restaurantName={restaurant.name} />
+      </div>
+    </>
+  );
+}

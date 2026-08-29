@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: dev",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bash ${workspaceFolder}/scripts/dev.sh",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}

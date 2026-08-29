@@ -1,0 +1,39 @@
+---
+description: Restaurant Digital Platform security, tenancy, AI, and development standards
+alwaysApply: true
+---
+
+# Restaurant Digital Platform — Development Rules
+
+Follow `DEVELOPMENT_RULES.md` in the project root. Non-negotiable highlights:
+
+## Security & tenancy
+- Never bypass RLS. Never trust client `restaurant_id` or prices.
+- Derive restaurant access from authenticated `restaurant_members` membership via guards — not hard-coded demo IDs.
+- Calculate order totals server-side. Never store raw card data. Verify payments server-side.
+- Validate all external input (Zod at API boundaries).
+
+## Data & types
+- TypeScript strict; avoid `any`.
+- Do not hardcode restaurant data, currency, or timezone.
+- Store timestamps in UTC; display in restaurant timezone.
+
+## AI (Phase 1)
+- Use approved DB tools only; never invent metrics.
+- AI cannot directly modify production data.
+- Owner must approve AI-generated content before publishing.
+
+## Scope & quality
+- No Phase 2/3 features unless explicitly requested.
+- Test business logic and tenant isolation; never disable tests to pass build.
+- No secrets in code; never commit `.env` files.
+
+## Process
+- Prefer simple architecture. Document important decisions.
+- Review `ARCHITECTURE.md` before architectural changes (create/update it when making structural changes).
+- Schema changes require a new migration in `supabase/migrations/`.
+- No destructive DB changes without explicit user approval.
+
+## Known Phase 1 violations to fix, not extend
+- Dashboard/API uses `getDemoRestaurantId()` instead of membership — violates rules 2, 3, 12.
+- `guardRestaurantRoute()` exists but is unwired in API routes — violates rules 3, 4.

@@ -1,0 +1,13 @@
+{
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "npm.runInTerminal": true,
+  "npm.enableScriptExplorer": true,
+  "npm.scriptExplorerAction": "run",
+  "files.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true
+}
