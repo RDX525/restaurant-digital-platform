@@ -1,16 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, Phone, LogIn } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { RESTAURANT_NAV_ITEMS } from "@/lib/restaurant/nav";
-import { getRestaurantNavHref } from "@/lib/restaurant/routing";
+import { getRestaurantNavHref, restaurantUsesRootPaths } from "@/lib/restaurant/routing";
 
 export function RestaurantFooter({
   restaurant,
-  useRootPaths = false,
 }: {
   restaurant: PublicRestaurant;
-  useRootPaths?: boolean;
 }) {
+  const pathname = usePathname();
+  const useRootPaths = restaurantUsesRootPaths(pathname, restaurant.slug);
   return (
     <footer className="bg-brand-surface relative mt-20">
       <div className="grain pointer-events-none absolute inset-0 z-[1] opacity-25" aria-hidden="true" />

@@ -5,8 +5,10 @@ import { StructuredData } from "@/components/restaurant/StructuredData";
 import { PageHeader } from "@/components/restaurant/PageHeader";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
-export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   return buildRestaurantMetadata(restaurant, {
     title: `Gallery | ${restaurant.name}`,
     description: `Photos from ${restaurant.name}.`,
@@ -14,8 +16,8 @@ export async function generateMetadata({ params, searchParams }: RestaurantPageP
   });
 }
 
-export default async function GalleryPage({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams, { galleryLimit: 50 });
+export default async function GalleryPage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params, { galleryLimit: 50 });
 
   return (
     <>

@@ -1,5 +1,7 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   getDemoRestaurant,
@@ -9,6 +11,7 @@ import {
 import {
   fetchRestaurantById,
   fetchRestaurantBySlug,
+  fetchRestaurantGallery,
   fetchPublishedRestaurants,
 } from "@/lib/restaurant/service";
 import type { PublicRestaurant, Restaurant } from "@/lib/restaurant/types";
@@ -43,8 +46,15 @@ async function loadRestaurantBySlugImpl(
   }
 
   try {
-    const supabase = await createClient();
-    const restaurant = await fetchRestaurantBySlug(supabase, slug, options);
+    const supabase = options?.includeUnpublished
+      ? await createClient()
+      : createPublicClient();
+    if (!supabase) return null;
+
+    const restaurant = await fetchRestaurantBySlug(supabase, slug, {
+      ...options,
+      galleryLimit: options?.galleryLimit ?? 0,
+    });
 
     if (restaurant) return restaurant;
 
@@ -63,17 +73,56 @@ async function loadRestaurantBySlugImpl(
   }
 }
 
-const SHARED_GALLERY_LIMIT = 50;
+const getCachedPublishedRestaurant =
+  process.env.VITEST === "true"
+    ? (slug: string) =>
+        loadRestaurantBySlugImpl(slug, { includeUnpublished: false, galleryLimit: 0 })
+    : unstable_cache(
+        async (slug: string) =>
+          loadRestaurantBySlugImpl(slug, { includeUnpublished: false, galleryLimit: 0 }),
+        ["public-restaurant-by-slug"],
+        { revalidate: 60 },
+      );
+
+const getCachedRestaurantGallery =
+  process.env.VITEST === "true"
+    ? loadRestaurantGalleryUncached
+    : unstable_cache(loadRestaurantGalleryUncached, ["public-restaurant-gallery"], {
+        revalidate: 60,
+      });
+
+async function loadRestaurantGalleryUncached(restaurantId: string, limit: number) {
+  if (isDemoRestaurantId(restaurantId) && !isSupabaseConfigured()) {
+    return sliceDemoGallery(limit);
+  }
+
+  const supabase = createPublicClient();
+  if (!supabase) {
+    return isDemoRestaurantId(restaurantId) ? sliceDemoGallery(limit) : [];
+  }
+
+  try {
+    return await fetchRestaurantGallery(supabase, restaurantId, limit);
+  } catch {
+    return isDemoRestaurantId(restaurantId) ? sliceDemoGallery(limit) : [];
+  }
+}
 
 export const loadRestaurantBySlug = cache(
   async (
     slug: string,
     includeUnpublished = false,
   ): Promise<PublicRestaurant | null> => {
-    return loadRestaurantBySlugImpl(slug, {
-      includeUnpublished,
-      galleryLimit: SHARED_GALLERY_LIMIT,
-    });
+    if (includeUnpublished) {
+      return loadRestaurantBySlugImpl(slug, { includeUnpublished: true, galleryLimit: 0 });
+    }
+    return getCachedPublishedRestaurant(slug);
+  },
+);
+
+export const loadRestaurantGallery = cache(
+  async (restaurantId: string, limit: number): Promise<PublicRestaurant["gallery"]> => {
+    return getCachedRestaurantGallery(restaurantId, limit);
   },
 );
 

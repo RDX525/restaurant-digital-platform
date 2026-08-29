@@ -32,6 +32,10 @@ export function isCustomDomainHost(host: string): boolean {
   return host !== platformHost && !host.startsWith("localhost");
 }
 
+export function restaurantUsesRootPaths(pathname: string, slug: string): boolean {
+  return !pathname.startsWith(`/r/${slug}`);
+}
+
 export function getRestaurantNavBase(
   slug: string,
   useRootPaths: boolean,

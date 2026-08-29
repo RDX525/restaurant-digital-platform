@@ -27,23 +27,34 @@ export async function fetchRestaurantBySlug(
   const { data: restaurant, error } = await query.single();
   if (error || !restaurant) return null;
 
-  let gallery: PublicRestaurant["gallery"] = [];
-  if (options?.galleryLimit != null && options.galleryLimit > 0) {
-    const { data, error: galleryError } = await supabase
-      .from("restaurant_gallery_images")
-      .select("*")
-      .eq("restaurant_id", restaurant.id)
-      .order("sort_order", { ascending: true })
-      .limit(options.galleryLimit);
-
-    if (galleryError) throw galleryError;
-    gallery = data ?? [];
-  }
+  const gallery = await fetchRestaurantGallery(
+    supabase,
+    restaurant.id,
+    options?.galleryLimit ?? 0,
+  );
 
   return {
     ...mapRestaurant(restaurant as Restaurant),
     gallery,
   };
+}
+
+export async function fetchRestaurantGallery(
+  supabase: SupabaseClient,
+  restaurantId: string,
+  limit: number,
+): Promise<PublicRestaurant["gallery"]> {
+  if (limit <= 0) return [];
+
+  const { data, error } = await supabase
+    .from("restaurant_gallery_images")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .order("sort_order", { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function fetchRestaurantByDomain(
@@ -93,18 +104,7 @@ export async function fetchRestaurantById(
 
   if (error || !restaurant) return null;
 
-  let gallery: PublicRestaurant["gallery"] = [];
-  if (options?.galleryLimit != null && options.galleryLimit > 0) {
-    const { data, error: galleryError } = await supabase
-      .from("restaurant_gallery_images")
-      .select("*")
-      .eq("restaurant_id", id)
-      .order("sort_order", { ascending: true })
-      .limit(options.galleryLimit);
-
-    if (galleryError) throw galleryError;
-    gallery = data ?? [];
-  }
+  const gallery = await fetchRestaurantGallery(supabase, id, options?.galleryLimit ?? 0);
 
   return {
     ...mapRestaurant(restaurant as Restaurant),

@@ -7,8 +7,10 @@ import { StructuredData } from "@/components/restaurant/StructuredData";
 import { PageHeader } from "@/components/restaurant/PageHeader";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
-export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   return buildRestaurantMetadata(restaurant, {
     title: `Contact | ${restaurant.name}`,
     description: `Contact and visit ${restaurant.name}.`,
@@ -16,8 +18,8 @@ export async function generateMetadata({ params, searchParams }: RestaurantPageP
   });
 }
 
-export default async function ContactPage({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export default async function ContactPage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
 
   return (
     <>

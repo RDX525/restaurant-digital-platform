@@ -1,5 +1,7 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   DEMO_MENU_ID,
@@ -56,14 +58,70 @@ export async function loadActiveMenuIdForRestaurant(
   }
 }
 
-export async function loadPublicMenuForRestaurant(restaurantId: string) {
-  const menuId = await loadActiveMenuIdForRestaurant(restaurantId);
-  if (!menuId) return null;
-  return loadPublicMenuById(menuId);
+async function loadActiveMenuIdPublic(restaurantId: string): Promise<string | null> {
+  if (isDemoRestaurantId(restaurantId) && !isSupabaseConfigured()) {
+    return DEMO_MENU_ID;
+  }
+
+  if (!isSupabaseConfigured()) {
+    return isDemoRestaurantId(restaurantId) ? DEMO_MENU_ID : null;
+  }
+
+  try {
+    const supabase = createPublicClient();
+    if (!supabase) {
+      return isDemoRestaurantId(restaurantId) ? DEMO_MENU_ID : null;
+    }
+    const menuId = await fetchActiveMenuForRestaurant(supabase, restaurantId);
+    if (menuId) return menuId;
+    return isDemoRestaurantId(restaurantId) ? DEMO_MENU_ID : null;
+  } catch {
+    return isDemoRestaurantId(restaurantId) ? DEMO_MENU_ID : null;
+  }
 }
 
+async function loadFullMenuPublic(menuId: string): Promise<FullMenu | null> {
+  if (isDemoMenuId(menuId) && !isSupabaseConfigured()) {
+    return getDemoFullMenu();
+  }
+
+  if (!isSupabaseConfigured()) {
+    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+  }
+
+  try {
+    const supabase = createPublicClient();
+    if (!supabase) {
+      return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    }
+    const menu = await fetchFullMenu(supabase, menuId);
+    if (menu) return menu;
+    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+  } catch {
+    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+  }
+}
+
+const getCachedPublicMenuForRestaurant =
+  process.env.VITEST === "true"
+    ? loadPublicMenuForRestaurantUncached
+    : unstable_cache(loadPublicMenuForRestaurantUncached, ["public-menu-for-restaurant"], {
+        revalidate: 60,
+      });
+
+async function loadPublicMenuForRestaurantUncached(restaurantId: string) {
+  const menuId = await loadActiveMenuIdPublic(restaurantId);
+  if (!menuId) return null;
+  const fullMenu = await loadFullMenuPublic(menuId);
+  return fullMenu ? filterPublicMenu(fullMenu) : null;
+}
+
+export const loadPublicMenuForRestaurant = cache((restaurantId: string) =>
+  getCachedPublicMenuForRestaurant(restaurantId),
+);
+
 export async function loadPublicMenuById(menuId: string) {
-  const fullMenu = await loadFullMenuById(menuId);
+  const fullMenu = await loadFullMenuPublic(menuId);
   return fullMenu ? filterPublicMenu(fullMenu) : null;
 }
 

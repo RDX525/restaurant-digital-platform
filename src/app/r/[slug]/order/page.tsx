@@ -6,8 +6,10 @@ import { PageHeader } from "@/components/restaurant/PageHeader";
 import { OrderCheckout } from "@/components/order/OrderCheckout";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
-export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   return buildRestaurantMetadata(restaurant, {
     title: `Order | ${restaurant.name}`,
     description: `Order online from ${restaurant.name}.`,
@@ -15,8 +17,8 @@ export async function generateMetadata({ params, searchParams }: RestaurantPageP
   });
 }
 
-export default async function OrderPage({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export default async function OrderPage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   const menu = await loadPublicMenuForRestaurant(restaurant.id);
 
   return (

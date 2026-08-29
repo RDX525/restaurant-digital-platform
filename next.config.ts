@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   images: {
     remotePatterns: [

@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/restaurant/PageHeader";
 import { ReservationForm } from "@/components/order/ReservationForm";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
-export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   return buildRestaurantMetadata(restaurant, {
     title: `Reservations | ${restaurant.name}`,
     description: `Book a table at ${restaurant.name}.`,
@@ -14,11 +16,8 @@ export async function generateMetadata({ params, searchParams }: RestaurantPageP
   });
 }
 
-export default async function ReservationsPage({
-  params,
-  searchParams,
-}: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export default async function ReservationsPage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
 
   return (
     <>

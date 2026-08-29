@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import type { MenuItemWithModifiers } from "@/lib/menu/types";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
@@ -17,8 +18,32 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ item, restaurant, className }: AddToCartButtonProps) {
-  const { addItem } = useOrderCart();
+  const { items, addItem, updateQuantity } = useOrderCart();
   const [open, setOpen] = useState(false);
+  const requiresModifiers = item.modifier_groups.length > 0;
+
+  const matchingLines = useMemo(
+    () => items.filter((line) => line.menuItemId === item.id),
+    [item.id, items],
+  );
+  const plainLine = matchingLines.find(
+    (line) => line.modifiers.length === 0 && !line.specialInstructions,
+  );
+  const quantity = requiresModifiers
+    ? matchingLines.reduce((sum, line) => sum + line.quantity, 0)
+    : (plainLine?.quantity ?? 0);
+  const stepperLine = requiresModifiers
+    ? matchingLines[matchingLines.length - 1]
+    : plainLine;
+
+  function trackAdd(nextQuantity: number) {
+    trackAnalyticsEvent({
+      restaurantSlug: restaurant.slug,
+      eventType: "ADD_TO_CART",
+      menuItemId: item.id,
+      metadata: { itemName: item.name, quantity: String(nextQuantity) },
+    });
+  }
 
   function handleQuickAdd() {
     trackAnalyticsEvent({
@@ -28,48 +53,114 @@ export function AddToCartButton({ item, restaurant, className }: AddToCartButton
       metadata: { itemName: item.name },
     });
 
-    if (item.modifier_groups.length > 0) {
+    if (requiresModifiers) {
       setOpen(true);
       return;
     }
 
     addItem(item, 1, []);
-    trackAnalyticsEvent({
-      restaurantSlug: restaurant.slug,
-      eventType: "ADD_TO_CART",
-      menuItemId: item.id,
-      metadata: { itemName: item.name, quantity: "1" },
-    });
+    trackAdd(1);
+  }
+
+  function handleIncrease() {
+    if (stepperLine) {
+      updateQuantity(stepperLine.id, stepperLine.quantity + 1);
+      trackAdd(stepperLine.quantity + 1);
+      return;
+    }
+
+    if (requiresModifiers) {
+      setOpen(true);
+      return;
+    }
+
+    addItem(item, 1, []);
+    trackAdd(1);
+  }
+
+  function handleDecrease() {
+    if (!stepperLine) return;
+    updateQuantity(stepperLine.id, stepperLine.quantity - 1);
   }
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleQuickAdd}
-        className={cn("btn-primary rounded-full", className)}
-      >
-        <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-        Add to order
-      </button>
+      {quantity > 0 ? (
+        <QuantityStepper
+          quantity={quantity}
+          itemName={item.name}
+          className={className}
+          onDecrease={handleDecrease}
+          onIncrease={handleIncrease}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={handleQuickAdd}
+          className={cn("btn-primary rounded-full", className)}
+        >
+          <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+          Add to order
+        </button>
+      )}
 
       {open ? (
         <ModifierModal
           item={item}
           onClose={() => setOpen(false)}
-          onConfirm={(quantity, modifiers, notes) => {
-            addItem(item, quantity, modifiers, notes);
-            trackAnalyticsEvent({
-              restaurantSlug: restaurant.slug,
-              eventType: "ADD_TO_CART",
-              menuItemId: item.id,
-              metadata: { itemName: item.name, quantity: String(quantity) },
-            });
+          onConfirm={(nextQuantity, modifiers, notes) => {
+            addItem(item, nextQuantity, modifiers, notes);
+            trackAdd(nextQuantity);
             setOpen(false);
           }}
         />
       ) : null}
     </>
+  );
+}
+
+function QuantityStepper({
+  quantity,
+  itemName,
+  className,
+  onDecrease,
+  onIncrease,
+}: {
+  quantity: number;
+  itemName: string;
+  className?: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex h-11 items-center rounded-full bg-gradient-brand-btn text-white shadow-glow ring-1 ring-gold-500/20",
+        className,
+      )}
+      role="group"
+      aria-label={`${itemName} quantity`}
+    >
+      <button
+        type="button"
+        onClick={onDecrease}
+        className="flex h-11 w-11 items-center justify-center rounded-full touch-manipulation hover:bg-white/10"
+        aria-label={`Remove one ${itemName}`}
+      >
+        <Minus className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <span className="min-w-7 text-center text-sm font-semibold tabular-nums" aria-live="polite">
+        {quantity}
+      </span>
+      <button
+        type="button"
+        onClick={onIncrease}
+        className="flex h-11 w-11 items-center justify-center rounded-full touch-manipulation hover:bg-white/10"
+        aria-label={`Add another ${itemName}`}
+      >
+        <Plus className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </div>
   );
 }
 
@@ -86,10 +177,14 @@ function ModifierModal({
     notes?: string,
   ) => void;
 }) {
+  const notesId = `item-notes-${item.id}`;
+  const titleId = `modifier-modal-title-${item.id}`;
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Record<string, string[]>>({});
+  const [selected, setSelected] = useState<Record<string, string[]>>(() =>
+    defaultRequiredSelections(item),
+  );
 
   const selectedModifiers = useMemo(() => {
     const modifiers: CartModifier[] = [];
@@ -120,12 +215,14 @@ function ModifierModal({
     groupId: string,
     modifierId: string,
     maxSelections: number,
+    required: boolean,
   ) {
     setSelected((current) => {
       const existing = current[groupId] ?? [];
       const isSelected = existing.includes(modifierId);
 
       if (maxSelections === 1) {
+        if (isSelected && required) return current;
         return { ...current, [groupId]: isSelected ? [] : [modifierId] };
       }
 
@@ -171,9 +268,9 @@ function ModifierModal({
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
-      className="platform-modal-backdrop"
+      className="platform-modal-backdrop z-[80]"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -182,12 +279,12 @@ function ModifierModal({
         className="platform-modal max-w-lg"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modifier-modal-title"
+        aria-labelledby={titleId}
       >
-        <div className="sticky top-0 flex items-start justify-between border-b border-pine-900/5 bg-white px-5 py-4">
+        <div className="sticky top-0 z-10 flex items-start justify-between border-b border-pine-900/5 bg-white px-5 py-4">
           <div>
             <p className="eyebrow">Customise</p>
-            <h2 id="modifier-modal-title" className="font-display text-2xl text-pine-900">
+            <h2 id={titleId} className="font-display text-2xl text-pine-900">
               {item.name}
             </h2>
             <p className="mt-1 text-sm text-pine-500">{formatPrice(item.price)}</p>
@@ -227,10 +324,16 @@ function ModifierModal({
                       <span className="flex items-center gap-3">
                         <input
                           type={group.max_selections === 1 ? "radio" : "checkbox"}
-                          name={group.id}
+                          name={`${item.id}-${group.id}`}
+                          value={modifier.id}
                           checked={checked}
                           onChange={() =>
-                            toggleModifier(group.id, modifier.id, group.max_selections)
+                            toggleModifier(
+                              group.id,
+                              modifier.id,
+                              group.max_selections,
+                              group.is_required,
+                            )
                           }
                           className="h-4 w-4 border-pine-300 text-pine-800 focus:ring-pine-500"
                         />
@@ -247,11 +350,11 @@ function ModifierModal({
           ))}
 
           <div>
-            <label htmlFor="item-notes" className="label">
+            <label htmlFor={notesId} className="label">
               Special instructions
             </label>
             <textarea
-              id="item-notes"
+              id={notesId}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={3}
@@ -292,6 +395,18 @@ function ModifierModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
+}
+
+function defaultRequiredSelections(item: MenuItemWithModifiers): Record<string, string[]> {
+  const selected: Record<string, string[]> = {};
+  for (const group of item.modifier_groups) {
+    const firstOption = group.modifiers[0];
+    if (group.is_required && group.min_selections >= 1 && firstOption) {
+      selected[group.id] = [firstOption.id];
+    }
+  }
+  return selected;
 }

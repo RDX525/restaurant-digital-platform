@@ -1,0 +1,13 @@
+# Supabase local/project config. Used by `supabase config push` for remote auth URLs.
+
+[auth]
+enabled = true
+site_url = "https://restaurant-digital-platform-beige.vercel.app"
+additional_redirect_urls = [
+  "https://restaurant-digital-platform-beige.vercel.app/auth/callback",
+  "https://restaurant-digital-platform-beige.vercel.app/auth/reset-password",
+  "https://restaurant-digital-platform-beige.vercel.app/auth/accept-invite",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/auth/reset-password",
+  "http://localhost:3000/auth/accept-invite",
+]

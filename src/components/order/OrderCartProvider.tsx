@@ -14,6 +14,8 @@ import {
   calculateCartTotals,
   calculateLineTotal,
   clearCart,
+  mergeItemIntoCart,
+  countUniqueDishes,
   readCart,
   writeCart,
 } from "@/lib/order/cart";
@@ -77,7 +79,7 @@ export function OrderCartProvider({
       specialInstructions?: string,
     ) => {
       const lineItem = buildCartLineItem(item, quantity, modifiers, specialInstructions);
-      persist((current) => [...current, lineItem]);
+      persist((current) => mergeItemIntoCart(current, lineItem));
     },
     [persist],
   );
@@ -116,10 +118,11 @@ export function OrderCartProvider({
     setItems([]);
   }, [restaurantSlug]);
 
-  const { subtotal, itemCount } = useMemo(
+  const { subtotal } = useMemo(
     () => calculateCartTotals(items, "pickup"),
     [items],
   );
+  const itemCount = useMemo(() => countUniqueDishes(items), [items]);
 
   const value = useMemo(
     () => ({

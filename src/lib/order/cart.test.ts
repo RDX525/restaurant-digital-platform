@@ -3,6 +3,8 @@ import {
   buildCartLineItem,
   calculateCartTotals,
   calculateLineTotal,
+  mergeItemIntoCart,
+  countUniqueDishes,
   validateModifierSelection,
 } from "@/lib/order/cart";
 import type { MenuItemWithModifiers } from "@/lib/menu/types";
@@ -76,5 +78,49 @@ describe("order cart", () => {
     expect(totals.deliveryFee).toBeGreaterThan(0);
     expect(totals.taxAmount).toBeGreaterThan(0);
     expect(totals.total).toBeGreaterThan(totals.subtotal);
+  });
+
+  it("merges matching cart lines by increasing quantity", () => {
+    const first = buildCartLineItem(item, 1, []);
+    const second = buildCartLineItem(item, 2, []);
+    const merged = mergeItemIntoCart([first], second);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.id).toBe(first.id);
+    expect(merged[0]?.quantity).toBe(3);
+    expect(merged[0]?.lineTotal).toBe(126);
+  });
+
+  it("keeps separate lines when modifiers differ", () => {
+    const plain = buildCartLineItem(item, 1, []);
+    const withModifier = buildCartLineItem(item, 1, [
+      {
+        id: "mod-1",
+        groupId: "group-1",
+        groupName: "Cooking preference",
+        name: "Medium rare",
+        price: 0,
+      },
+    ]);
+
+    expect(mergeItemIntoCart([plain], withModifier)).toHaveLength(2);
+  });
+
+  it("counts unique dishes rather than portions", () => {
+    const first = buildCartLineItem(item, 3, []);
+    const second = buildCartLineItem(item, 1, [
+      {
+        id: "mod-1",
+        groupId: "group-1",
+        groupName: "Cooking preference",
+        name: "Medium rare",
+        price: 0,
+      },
+    ]);
+    const other = { ...first, id: "line-other", menuItemId: "item-2" };
+
+    expect(countUniqueDishes([first])).toBe(1);
+    expect(countUniqueDishes([first, second])).toBe(1);
+    expect(countUniqueDishes([first, other])).toBe(2);
   });
 });

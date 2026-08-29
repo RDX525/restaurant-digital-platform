@@ -74,6 +74,41 @@ export function buildCartLineItem(
   };
 }
 
+export function cartLineMatchKey(
+  line: Pick<CartLineItem, "menuItemId" | "modifiers" | "specialInstructions">,
+): string {
+  const modifierIds = line.modifiers
+    .map((modifier) => modifier.id)
+    .sort()
+    .join(",");
+  return `${line.menuItemId}|${modifierIds}|${line.specialInstructions?.trim() ?? ""}`;
+}
+
+export function mergeItemIntoCart(
+  items: CartLineItem[],
+  next: CartLineItem,
+): CartLineItem[] {
+  const key = cartLineMatchKey(next);
+  const index = items.findIndex((item) => cartLineMatchKey(item) === key);
+  if (index === -1) return [...items, next];
+
+  const existing = items[index];
+  const quantity = existing.quantity + next.quantity;
+  const updated: CartLineItem = {
+    ...existing,
+    quantity,
+    lineTotal: calculateLineTotal(existing.basePrice, existing.modifiers, quantity),
+  };
+
+  return items.map((item, itemIndex) => (itemIndex === index ? updated : item));
+}
+
+export function countUniqueDishes(
+  items: Pick<CartLineItem, "menuItemId">[],
+): number {
+  return new Set(items.map((item) => item.menuItemId)).size;
+}
+
 export function validateModifierSelection(
   item: import("@/lib/menu/types").MenuItemWithModifiers,
   selected: import("./types").CartModifier[],

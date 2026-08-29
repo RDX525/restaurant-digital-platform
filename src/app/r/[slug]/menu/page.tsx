@@ -6,8 +6,10 @@ import { PageHeader } from "@/components/restaurant/PageHeader";
 import { RestaurantMenuView } from "@/components/restaurant/RestaurantMenuView";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
-export async function generateMetadata({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   return buildRestaurantMetadata(restaurant, {
     title: `Menu | ${restaurant.name}`,
     description: `Browse the menu at ${restaurant.name}. Prices in NZD.`,
@@ -15,8 +17,8 @@ export async function generateMetadata({ params, searchParams }: RestaurantPageP
   });
 }
 
-export default async function MenuPage({ params, searchParams }: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams);
+export default async function MenuPage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params);
   const menu = await loadPublicMenuForRestaurant(restaurant.id);
 
   return (

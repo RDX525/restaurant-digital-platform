@@ -4,17 +4,14 @@ import { OpeningHours } from "@/components/restaurant/OpeningHours";
 import { GalleryGrid } from "@/components/restaurant/GalleryGrid";
 import { getPublicRestaurant } from "@/lib/restaurant/page-data";
 import { getRestaurantBasePath } from "@/lib/restaurant/seo";
-import { isPreviewMode } from "@/lib/restaurant/routing";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 import { ArrowRight } from "lucide-react";
 
-export default async function RestaurantHomePage({
-  params,
-  searchParams,
-}: RestaurantPageProps) {
-  const restaurant = await getPublicRestaurant(params, searchParams, { galleryLimit: 3 });
+export const revalidate = 60;
+
+export default async function RestaurantHomePage({ params }: RestaurantPageProps) {
+  const restaurant = await getPublicRestaurant(params, { galleryLimit: 3 });
   const base = getRestaurantBasePath(restaurant.slug);
-  const preview = isPreviewMode(await searchParams);
 
   return (
     <>
@@ -74,12 +71,6 @@ export default async function RestaurantHomePage({
 
         <OpeningHours restaurant={restaurant} />
       </div>
-
-      {preview ? (
-        <div className="sr-only" aria-live="polite">
-          Previewing unpublished restaurant website
-        </div>
-      ) : null}
     </>
   );
 }

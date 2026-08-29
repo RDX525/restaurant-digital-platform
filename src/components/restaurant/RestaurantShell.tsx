@@ -8,14 +8,9 @@ import { RestaurantFooter } from "@/components/restaurant/RestaurantFooter";
 interface RestaurantShellProps {
   restaurant: PublicRestaurant;
   children: React.ReactNode;
-  useRootPaths?: boolean;
 }
 
-export function RestaurantShell({
-  restaurant,
-  children,
-  useRootPaths = false,
-}: RestaurantShellProps) {
+export function RestaurantShell({ restaurant, children }: RestaurantShellProps) {
   return (
     <TableSessionProvider>
       <OrderCartProvider restaurantSlug={restaurant.slug}>
@@ -26,10 +21,10 @@ export function RestaurantShell({
           >
             Skip to content
           </a>
-          <RestaurantHeader restaurant={restaurant} useRootPaths={useRootPaths} />
+          <RestaurantHeader restaurant={restaurant} />
           <TableSessionBanner />
           <main id="main-content">{children}</main>
-          <RestaurantFooter restaurant={restaurant} useRootPaths={useRootPaths} />
+          <RestaurantFooter restaurant={restaurant} />
         </div>
       </OrderCartProvider>
     </TableSessionProvider>
