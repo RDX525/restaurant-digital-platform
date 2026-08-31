@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenVisible } from "@/hooks/useIntervalWhenVisible";
 import {
   CalendarDays,
@@ -13,6 +13,7 @@ import type { PublicReservation, ReservationSettings } from "@/lib/reservation/t
 import { STATUS_LABELS } from "@/lib/reservation/constants";
 import type { ReservationStatus } from "@/lib/reservation/constants";
 import { getErrorMessage, cn } from "@/lib/utils";
+import { replaceIfUnchanged } from "@/lib/react/replace-if-changed";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { DashboardResourceGate } from "@/components/dashboard/DashboardResourceGate";
 
@@ -109,19 +110,26 @@ export function ReservationsDashboard() {
     bookingMinNoticeHours: "2",
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const reservationsRequestRef = useRef<AbortController | null>(null);
 
   const loadReservations = useCallback(async () => {
     if (!restaurantId) return;
+    reservationsRequestRef.current?.abort();
+    const controller = new AbortController();
+    reservationsRequestRef.current = controller;
     try {
-      const response = await fetch(`/api/restaurants/${restaurantId}/reservations`);
+      const response = await fetch(`/api/restaurants/${restaurantId}/reservations`, {
+        signal: controller.signal,
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to load reservations");
-      setReservations(payload);
+      setReservations((current) => replaceIfUnchanged(current, payload));
       setError(null);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(getErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [restaurantId]);
 
@@ -147,6 +155,9 @@ export function ReservationsDashboard() {
     if (!restaurantId) return;
     void loadReservations();
     void loadSettings();
+    return () => {
+      reservationsRequestRef.current?.abort();
+    };
   }, [loadReservations, loadSettings, restaurantId]);
 
   useIntervalWhenVisible(loadReservations, restaurantId ? POLL_INTERVAL_MS : null);

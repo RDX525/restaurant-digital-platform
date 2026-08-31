@@ -26,7 +26,7 @@ import type {
 import type { PaymentSessionView } from "@/lib/payment/types";
 import { useOrderCart } from "@/components/order/OrderCartProvider";
 import { useTableSession } from "@/components/table/TableSessionProvider";
-import { getRestaurantBasePath } from "@/lib/restaurant/seo";
+import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 import { cn, formatPrice } from "@/lib/utils";
 import { trackPageEvent } from "@/lib/analytics/client";
 
@@ -36,7 +36,7 @@ interface OrderCheckoutProps {
 }
 
 export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
-  const base = getRestaurantBasePath(restaurant.slug);
+  const { homeHref, menuHref, ordersHref } = useRestaurantNav(restaurant.slug);
   const { items, updateQuantity, removeItem, clearAll } = useOrderCart();
   const { session: tableSession } = useTableSession();
   const isDineIn = Boolean(
@@ -181,7 +181,9 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
       <ConfirmationView
         order={placedOrder}
         restaurant={restaurant}
-        base={base}
+        homeHref={homeHref}
+        menuHref={menuHref}
+        ordersHref={ordersHref}
       />
     );
   }
@@ -194,7 +196,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
         <CartStep
           items={items}
           menu={menu}
-          base={base}
+          menuHref={menuHref}
           totals={totals}
           onUpdateQuantity={updateQuantity}
           onRemove={removeItem}
@@ -294,7 +296,7 @@ function StepIndicator({ step }: { step: CheckoutStep }) {
 function CartStep({
   items,
   menu,
-  base,
+  menuHref,
   totals,
   onUpdateQuantity,
   onRemove,
@@ -303,7 +305,7 @@ function CartStep({
 }: {
   items: ReturnType<typeof useOrderCart>["items"];
   menu: FullMenu | null;
-  base: string;
+  menuHref: string;
   totals: ReturnType<typeof calculateCartTotals>;
   onUpdateQuantity: (lineId: string, quantity: number) => void;
   onRemove: (lineId: string) => void;
@@ -318,7 +320,7 @@ function CartStep({
         <p className="mt-2 text-sm text-pine-500">
           Browse the menu and add dishes to start your order.
         </p>
-        <Link href={`${base}/menu`} className="btn-accent mt-6">
+        <Link href={menuHref} className="btn-accent mt-6">
           Browse menu
           <ArrowRight className="h-4 w-4" />
         </Link>
@@ -401,7 +403,7 @@ function CartStep({
       {error ? <div className="alert-error">{error}</div> : null}
 
       <div className="flex flex-wrap gap-3">
-        <Link href={`${base}/menu`} className="btn-secondary">
+        <Link href={menuHref} className="btn-secondary">
           Add more items
         </Link>
         <button
@@ -627,11 +629,15 @@ function PaymentStep({
 function ConfirmationView({
   order,
   restaurant,
-  base,
+  homeHref,
+  menuHref,
+  ordersHref,
 }: {
   order: PlacedOrder;
   restaurant: PublicRestaurant;
-  base: string;
+  homeHref: string;
+  menuHref: string;
+  ordersHref: string;
 }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
@@ -680,13 +686,13 @@ function ConfirmationView({
         </div>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href={base} className="btn-secondary">
+          <Link href={homeHref} className="btn-secondary">
             Back to home
           </Link>
-          <Link href={`${base}/orders`} className="btn-secondary">
+          <Link href={ordersHref} className="btn-secondary">
             Order history
           </Link>
-          <Link href={`${base}/menu`} className="btn-accent">
+          <Link href={menuHref} className="btn-accent">
             Order again
           </Link>
         </div>

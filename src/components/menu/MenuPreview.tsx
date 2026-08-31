@@ -49,7 +49,7 @@ export function MenuPreview({ menu, publicView = false }: MenuPreviewProps) {
                 <article
                   key={item.id}
                   className={cn(
-                    "card-interactive p-5",
+                    "menu-item-row card-interactive p-5",
                     item.is_sold_out && !publicView && "opacity-60",
                   )}
                 >

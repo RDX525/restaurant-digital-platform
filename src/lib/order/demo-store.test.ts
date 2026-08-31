@@ -39,6 +39,7 @@ function buildOrderInput(idempotencyKey: string) {
     },
     pricedItems: lines,
     totals,
+    items: [{ menuItemId: item.id, quantity: 1, modifierIds: [] }],
   };
 }
 

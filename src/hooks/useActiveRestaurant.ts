@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getErrorMessage } from "@/lib/utils";
 
 export type ActiveRestaurant = {
@@ -10,6 +10,8 @@ export type ActiveRestaurant = {
   role: string;
   permissions: string[];
 };
+
+const EMPTY_PERMISSIONS: string[] = [];
 
 let cachedRestaurant: ActiveRestaurant | null = null;
 let inflight: Promise<ActiveRestaurant> | null = null;
@@ -64,15 +66,24 @@ export function useActiveRestaurant() {
     void reload(false);
   }, [reload]);
 
-  return {
-    restaurant,
-    restaurantId: restaurant?.id ?? null,
-    restaurantSlug: restaurant?.slug ?? null,
-    role: restaurant?.role ?? null,
-    permissions: restaurant?.permissions ?? [],
-    hasPermission: (permission: string) => restaurant?.permissions.includes(permission) ?? false,
-    loading,
-    error,
-    reload: () => reload(true),
-  };
+  const permissions = restaurant?.permissions ?? EMPTY_PERMISSIONS;
+  const hasPermission = useCallback(
+    (permission: string) => permissions.includes(permission),
+    [permissions],
+  );
+
+  return useMemo(
+    () => ({
+      restaurant,
+      restaurantId: restaurant?.id ?? null,
+      restaurantSlug: restaurant?.slug ?? null,
+      role: restaurant?.role ?? null,
+      permissions,
+      hasPermission,
+      loading,
+      error,
+      reload: () => reload(true),
+    }),
+    [restaurant, permissions, hasPermission, loading, error, reload],
+  );
 }

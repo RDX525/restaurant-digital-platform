@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, CheckCircle2, Loader2 } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
-import { getRestaurantBasePath } from "@/lib/restaurant/seo";
+import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 import type { AvailabilitySlot } from "@/lib/reservation/types";
 import { getErrorMessage } from "@/lib/utils";
 import Link from "next/link";
@@ -13,7 +13,7 @@ interface ReservationFormProps {
 }
 
 export function ReservationForm({ restaurant }: ReservationFormProps) {
-  const base = getRestaurantBasePath(restaurant.slug);
+  const { homeHref } = useRestaurantNav(restaurant.slug);
   const [submitted, setSubmitted] = useState<{
     name: string;
     date: string;
@@ -115,7 +115,7 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
           Thanks {submitted.name}. We will confirm your table for {submitted.guests} guests on{" "}
           {submitted.date} at {submitted.time}.
         </p>
-        <Link href={base} className="btn-secondary mt-6 inline-flex">
+        <Link href={homeHref} className="btn-secondary mt-6 inline-flex">
           Back to home
         </Link>
       </div>
@@ -174,7 +174,7 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
                 type="button"
                 disabled={!slot.available}
                 onClick={() => setForm({ ...form, time: slot.time })}
-                className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium touch-manipulation transition ${
                   form.time === slot.time
                     ? "border-gold-500 bg-gold-50 text-pine-900"
                     : slot.available
@@ -231,10 +231,14 @@ function Field({
   min?: number;
   max?: number;
 }) {
+  const fieldId = `reservation-${label.toLowerCase()}`;
   return (
     <div>
-      <label className="label">{label}</label>
+      <label htmlFor={fieldId} className="label">
+        {label}
+      </label>
       <input
+        id={fieldId}
         type={type}
         value={value}
         required={required}

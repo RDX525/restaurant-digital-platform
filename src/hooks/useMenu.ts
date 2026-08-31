@@ -16,17 +16,22 @@ export function useMenu(menuId: string | null, options?: { realtime?: boolean })
   const [error, setError] = useState<string | null>(null);
   const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (options?: { silent?: boolean }) => {
     if (!menuId) return;
-    setLoading(true);
-    setError(null);
+    if (!options?.silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const data = await fetchMenu(menuId, { full: true });
       setMenu(data);
+      setError(null);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }, [menuId]);
 
@@ -35,7 +40,7 @@ export function useMenu(menuId: string | null, options?: { realtime?: boolean })
       clearTimeout(reloadTimerRef.current);
     }
     reloadTimerRef.current = setTimeout(() => {
-      void reload();
+      void reload({ silent: true });
     }, REALTIME_DEBOUNCE_MS);
   }, [reload]);
 

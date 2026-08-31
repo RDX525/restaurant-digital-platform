@@ -21,7 +21,7 @@ export function OpeningHours({ restaurant }: OpeningHoursProps) {
           return (
             <div
               key={day}
-              className="flex items-center justify-between px-5 py-4 text-sm transition hover:bg-cream-50/80"
+              className="flex items-center justify-between gap-4 px-5 py-4 text-sm [@media(hover:hover)]:hover:bg-cream-50/80"
             >
               <dt className="font-medium text-pine-800">{DAY_LABELS[day]}</dt>
               <dd className="text-pine-600">

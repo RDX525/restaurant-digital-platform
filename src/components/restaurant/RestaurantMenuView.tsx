@@ -51,7 +51,7 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
             {category.items.map((item) => (
               <li
                 key={item.id}
-                className="card-interactive flex flex-col gap-5 p-5 sm:flex-row sm:items-start"
+                className="menu-item-row card-interactive flex flex-col gap-5 p-5 sm:flex-row sm:items-start"
               >
                 {item.photo_url ? (
                   <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl shadow-soft sm:h-32 sm:w-32">

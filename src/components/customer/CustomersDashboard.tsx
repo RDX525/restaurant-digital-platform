@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   CalendarDays,
   Mail,
@@ -34,26 +35,33 @@ export function CustomersDashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CustomerDetail | null>(null);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const customersRequestRef = useRef<AbortController | null>(null);
 
   const loadCustomers = useCallback(async (search?: string) => {
     if (!restaurantId) return;
+    customersRequestRef.current?.abort();
+    const controller = new AbortController();
+    customersRequestRef.current = controller;
     try {
       const params = new URLSearchParams();
       if (search?.trim()) params.set("q", search.trim());
       const response = await fetch(
         `/api/restaurants/${restaurantId}/customers?${params.toString()}`,
+        { signal: controller.signal },
       );
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to load customers");
       setCustomers(payload);
       setError(null);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(getErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [restaurantId]);
 
@@ -80,8 +88,11 @@ export function CustomersDashboard() {
 
   useEffect(() => {
     if (!restaurantId) return;
-    void loadCustomers(query);
-  }, [loadCustomers, query, restaurantId]);
+    void loadCustomers(debouncedQuery);
+    return () => {
+      customersRequestRef.current?.abort();
+    };
+  }, [loadCustomers, debouncedQuery, restaurantId]);
 
   useEffect(() => {
     if (selectedId) {

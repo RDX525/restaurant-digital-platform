@@ -7,14 +7,14 @@ import type { PlacedOrder } from "@/lib/order/types";
 import { STATUS_LABELS } from "@/lib/order/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
-import { getRestaurantBasePath } from "@/lib/restaurant/seo";
+import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 
 interface OrderHistoryProps {
   restaurant: PublicRestaurant;
 }
 
 export function OrderHistory({ restaurant }: OrderHistoryProps) {
-  const base = getRestaurantBasePath(restaurant.slug);
+  const { orderHref } = useRestaurantNav(restaurant.slug);
   const [email, setEmail] = useState("");
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -134,7 +134,7 @@ export function OrderHistory({ restaurant }: OrderHistoryProps) {
       </div>
 
       <div className="mt-8">
-        <Link href={`${base}/order`} className="btn-secondary">
+        <Link href={orderHref} className="btn-secondary">
           Place a new order
         </Link>
       </div>

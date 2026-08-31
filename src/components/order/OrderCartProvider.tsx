@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import type { MenuItemWithModifiers } from "@/lib/menu/types";
 import {
@@ -19,12 +20,15 @@ import {
   readCart,
   writeCart,
 } from "@/lib/order/cart";
+import {
+  getCartLinesForMenuItem,
+  getEmptyCartLines,
+  setCartItemsSnapshot,
+  subscribeCartItems,
+} from "@/lib/order/cart-store";
 import type { CartLineItem, CartModifier } from "@/lib/order/types";
 
-interface OrderCartContextValue {
-  items: CartLineItem[];
-  itemCount: number;
-  subtotal: number;
+interface OrderCartActions {
   addItem: (
     item: MenuItemWithModifiers,
     quantity: number,
@@ -36,7 +40,15 @@ interface OrderCartContextValue {
   clearAll: () => void;
 }
 
-const OrderCartContext = createContext<OrderCartContextValue | null>(null);
+interface OrderCartContextValue extends OrderCartActions {
+  items: CartLineItem[];
+  itemCount: number;
+  subtotal: number;
+}
+
+const OrderCartStateContext = createContext<OrderCartContextValue | null>(null);
+const OrderCartActionsContext = createContext<OrderCartActions | null>(null);
+const OrderCartCountContext = createContext(0);
 
 function loadInitialItems(restaurantSlug: string): CartLineItem[] {
   if (typeof window === "undefined") return [];
@@ -50,10 +62,12 @@ export function OrderCartProvider({
   restaurantSlug: string;
   children: React.ReactNode;
 }) {
-  const [items, setItems] = useState<CartLineItem[]>(() => loadInitialItems(restaurantSlug));
+  const [items, setItems] = useState<CartLineItem[]>([]);
 
   useEffect(() => {
-    setItems(loadInitialItems(restaurantSlug));
+    const next = loadInitialItems(restaurantSlug);
+    setItems(next);
+    setCartItemsSnapshot(next);
   }, [restaurantSlug]);
 
   const persist = useCallback(
@@ -65,6 +79,7 @@ export function OrderCartProvider({
           items: nextItems,
           updatedAt: new Date().toISOString(),
         });
+        setCartItemsSnapshot(nextItems);
         return nextItems;
       });
     },
@@ -116,6 +131,7 @@ export function OrderCartProvider({
   const clearAll = useCallback(() => {
     clearCart(restaurantSlug);
     setItems([]);
+    setCartItemsSnapshot([]);
   }, [restaurantSlug]);
 
   const { subtotal } = useMemo(
@@ -124,28 +140,61 @@ export function OrderCartProvider({
   );
   const itemCount = useMemo(() => countUniqueDishes(items), [items]);
 
-  const value = useMemo(
+  const actions = useMemo(
     () => ({
-      items,
-      itemCount,
-      subtotal,
       addItem,
       updateQuantity,
       removeItem,
       clearAll,
     }),
-    [items, itemCount, subtotal, addItem, updateQuantity, removeItem, clearAll],
+    [addItem, updateQuantity, removeItem, clearAll],
+  );
+
+  const value = useMemo(
+    () => ({
+      items,
+      itemCount,
+      subtotal,
+      ...actions,
+    }),
+    [items, itemCount, subtotal, actions],
   );
 
   return (
-    <OrderCartContext.Provider value={value}>{children}</OrderCartContext.Provider>
+    <OrderCartActionsContext.Provider value={actions}>
+      <OrderCartCountContext.Provider value={itemCount}>
+        <OrderCartStateContext.Provider value={value}>
+          {children}
+        </OrderCartStateContext.Provider>
+      </OrderCartCountContext.Provider>
+    </OrderCartActionsContext.Provider>
   );
 }
 
 export function useOrderCart() {
-  const context = useContext(OrderCartContext);
+  const context = useContext(OrderCartStateContext);
   if (!context) {
     throw new Error("useOrderCart must be used within OrderCartProvider");
   }
   return context;
+}
+
+export function useOrderCartActions() {
+  const context = useContext(OrderCartActionsContext);
+  if (!context) {
+    throw new Error("useOrderCartActions must be used within OrderCartProvider");
+  }
+  return context;
+}
+
+export function useOrderCartCount() {
+  return useContext(OrderCartCountContext);
+}
+
+export function useCartLinesForMenuItem(menuItemId: string) {
+  return useSyncExternalStore(
+    subscribeCartItems,
+    () => getCartLinesForMenuItem(menuItemId),
+    getEmptyCartLines,
+  );
 }

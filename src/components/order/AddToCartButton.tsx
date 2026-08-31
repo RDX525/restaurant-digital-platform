@@ -7,7 +7,10 @@ import type { MenuItemWithModifiers } from "@/lib/menu/types";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { validateModifierSelection } from "@/lib/order/cart";
 import type { CartModifier } from "@/lib/order/types";
-import { useOrderCart } from "@/components/order/OrderCartProvider";
+import {
+  useCartLinesForMenuItem,
+  useOrderCartActions,
+} from "@/components/order/OrderCartProvider";
 import { cn, formatPrice } from "@/lib/utils";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
@@ -18,14 +21,10 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ item, restaurant, className }: AddToCartButtonProps) {
-  const { items, addItem, updateQuantity } = useOrderCart();
+  const { addItem, updateQuantity } = useOrderCartActions();
+  const matchingLines = useCartLinesForMenuItem(item.id);
   const [open, setOpen] = useState(false);
   const requiresModifiers = item.modifier_groups.length > 0;
-
-  const matchingLines = useMemo(
-    () => items.filter((line) => line.menuItemId === item.id),
-    [item.id, items],
-  );
   const plainLine = matchingLines.find(
     (line) => line.modifiers.length === 0 && !line.specialInstructions,
   );

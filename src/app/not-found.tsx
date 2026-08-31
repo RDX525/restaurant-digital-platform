@@ -4,7 +4,7 @@ import { PlatformBrand } from "@/components/platform/PlatformBrand";
 
 export default function NotFound() {
   return (
-    <div className="platform-page flex min-h-screen flex-col items-center justify-center px-6 py-16">
+    <div className="platform-page flex min-h-dvh flex-col items-center justify-center px-6 py-16">
       <div className="landing-auth-card max-w-md text-center animate-slide-up">
         <PlatformBrand href="/" size="sm" className="mb-6 justify-center" />
         <p className="eyebrow">404</p>

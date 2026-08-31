@@ -71,4 +71,9 @@ describe("restaurant routing", () => {
       "/r/demo-restaurant/order",
     );
   });
+
+  it("resolves root paths on a custom domain", () => {
+    expect(resolveRestaurantPath(restaurant, "about", true)).toBe("/about");
+    expect(resolveRestaurantPath(restaurant, "order", true)).toBe("/order");
+  });
 });

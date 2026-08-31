@@ -3,7 +3,8 @@ import { RestaurantHero } from "@/components/restaurant/RestaurantHero";
 import { OpeningHours } from "@/components/restaurant/OpeningHours";
 import { GalleryGrid } from "@/components/restaurant/GalleryGrid";
 import { getPublicRestaurant } from "@/lib/restaurant/page-data";
-import { getRestaurantBasePath } from "@/lib/restaurant/seo";
+import { getRequestRestaurantNav } from "@/lib/restaurant/request-nav";
+import { getRestaurantNavHref } from "@/lib/restaurant/routing";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 import { ArrowRight } from "lucide-react";
 
@@ -11,7 +12,9 @@ export const revalidate = 60;
 
 export default async function RestaurantHomePage({ params }: RestaurantPageProps) {
   const restaurant = await getPublicRestaurant(params, { galleryLimit: 3 });
-  const base = getRestaurantBasePath(restaurant.slug);
+  const { useRootPaths } = await getRequestRestaurantNav(restaurant.slug);
+  const aboutHref = getRestaurantNavHref(restaurant.slug, "about", useRootPaths);
+  const galleryHref = getRestaurantNavHref(restaurant.slug, "gallery", useRootPaths);
 
   return (
     <>
@@ -31,7 +34,7 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
               {restaurant.about_text.length > 280 ? "…" : ""}
             </p>
             <Link
-              href={`${base}/about`}
+              href={aboutHref}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold underline-offset-4 transition hover:underline"
               style={{ color: restaurant.primary_color }}
             >
@@ -52,7 +55,7 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
               </h2>
             </div>
             <Link
-              href={`${base}/gallery`}
+              href={galleryHref}
               className="inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 transition hover:underline"
               style={{ color: restaurant.primary_color }}
             >

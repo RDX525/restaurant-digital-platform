@@ -116,7 +116,7 @@ describe("intelligence tools", () => {
           total_spend: 72,
           last_reservation_at: null,
           total_reservations: 0,
-          lifecycle_stage: "regular",
+          lifecycle_stage: "active",
           metadata: {},
           created_at: "2026-07-01T06:00:00.000Z",
           updated_at: "2026-07-15T06:00:00.000Z",

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Globe,
@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isPrefixRouteActive } from "@/lib/nav/active";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { PlatformBrand } from "@/components/platform/PlatformBrand";
 
@@ -45,14 +46,74 @@ interface DashboardShellProps {
   action?: React.ReactNode;
 }
 
-export function DashboardShell({
-  children,
-  title,
-  subtitle,
-  backHref,
-  backLabel = "Back",
-  action,
-}: DashboardShellProps) {
+function DashboardNavLink({
+  href,
+  label,
+  description,
+  icon: Icon,
+  pathname,
+  variant,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: (typeof NAV)[number]["icon"];
+  pathname: string;
+  variant: "desktop" | "mobile";
+}) {
+  const active = isPrefixRouteActive(pathname, href);
+
+  if (variant === "desktop") {
+    return (
+      <Link
+        href={href}
+        prefetch
+        className={cn(
+          "group flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors duration-150",
+          active
+            ? "nav-pill-active bg-white/10"
+            : "text-pine-300 hover:bg-white/5 hover:text-white",
+        )}
+        aria-current={active ? "page" : undefined}
+      >
+        <span
+          className={cn(
+            "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors",
+            active ? "bg-gold-500/20 text-gold-400" : "bg-white/5 text-pine-400 group-hover:text-pine-200",
+          )}
+        >
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span>
+          <span className="block text-sm font-semibold">{label}</span>
+          <span className="mt-0.5 block text-xs text-pine-500 group-hover:text-pine-400">
+            {description}
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      prefetch
+      className={cn(
+        "flex items-center gap-3 rounded-2xl px-3 py-3",
+        active ? "nav-gradient-active" : "text-pine-700 hover:bg-cream-50",
+      )}
+      aria-current={active ? "page" : undefined}
+    >
+      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span>
+        <span className="block text-sm font-semibold">{label}</span>
+        <span className="block text-xs text-pine-500">{description}</span>
+      </span>
+    </Link>
+  );
+}
+
+export function DashboardChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -71,13 +132,17 @@ export function DashboardShell({
     };
   }, [mobileNavOpen]);
 
-  const visibleNav = NAV.filter((item) => {
-    if (restaurantLoading) return true;
-    if ("anyPermission" in item && item.anyPermission) {
-      return item.anyPermission.some((permission) => hasPermission(permission));
-    }
-    return hasPermission(item.permission);
-  });
+  const visibleNav = useMemo(
+    () =>
+      NAV.filter((item) => {
+        if (restaurantLoading) return true;
+        if ("anyPermission" in item && item.anyPermission) {
+          return item.anyPermission.some((permission) => hasPermission(permission));
+        }
+        return hasPermission(item.permission);
+      }),
+    [hasPermission, restaurantLoading],
+  );
 
   async function handleSignOut() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -97,37 +162,17 @@ export function DashboardShell({
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-pine-500">
             Workspace
           </p>
-          {visibleNav.map(({ href, label, icon: Icon, description }) => {
-            const active = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "group flex items-start gap-3 rounded-2xl px-3 py-3 transition duration-200",
-                  active
-                    ? "nav-pill-active bg-white/10"
-                    : "text-pine-300 hover:bg-white/5 hover:text-white",
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                <span
-                  className={cn(
-                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition",
-                    active ? "bg-gold-500/20 text-gold-400" : "bg-white/5 text-pine-400 group-hover:text-pine-200",
-                  )}
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <span>
-                  <span className="block text-sm font-semibold">{label}</span>
-                  <span className="mt-0.5 block text-xs text-pine-500 group-hover:text-pine-400">
-                    {description}
-                  </span>
-                </span>
-              </Link>
-            );
-          })}
+          {visibleNav.map(({ href, label, icon, description }) => (
+            <DashboardNavLink
+              key={href}
+              href={href}
+              label={label}
+              description={description}
+              icon={icon}
+              pathname={pathname}
+              variant="desktop"
+            />
+          ))}
         </nav>
 
         <div className="relative z-10 space-y-1 border-t border-white/5 p-4">
@@ -178,26 +223,17 @@ export function DashboardShell({
               className="max-h-[min(70dvh,32rem)] overflow-y-auto border-t border-pine-900/5 bg-white/95 px-3 py-3"
               aria-label="Dashboard"
             >
-              {visibleNav.map(({ href, label, icon: Icon, description }) => {
-                const active = pathname.startsWith(href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-2xl px-3 py-3",
-                      active ? "nav-gradient-active" : "text-pine-700 hover:bg-cream-50",
-                    )}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span>
-                      <span className="block text-sm font-semibold">{label}</span>
-                      <span className="block text-xs text-pine-500">{description}</span>
-                    </span>
-                  </Link>
-                );
-              })}
+              {visibleNav.map(({ href, label, icon, description }) => (
+                <DashboardNavLink
+                  key={href}
+                  href={href}
+                  label={label}
+                  description={description}
+                  icon={icon}
+                  pathname={pathname}
+                  variant="mobile"
+                />
+              ))}
               <div className="mt-2 space-y-1 border-t border-pine-900/5 pt-2">
                 {restaurantSlug ? (
                   <Link
@@ -222,45 +258,60 @@ export function DashboardShell({
           ) : null}
         </header>
 
-        <div className="platform-header-bar px-4 py-5 sm:px-8">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-            <div>
-              {backHref ? (
-                <Link
-                  href={backHref}
-                  className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-pine-500 transition hover:text-pine-800"
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  {backLabel}
-                </Link>
-              ) : null}
-              {title ? (
-                <>
-                  <p className="eyebrow">Dashboard</p>
-                  <h1 className="mt-1 font-display text-3xl text-pine-900 sm:text-4xl">
-                    {title}
-                  </h1>
-                  {subtitle ? (
-                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pine-600">
-                      {subtitle}
-                    </p>
-                  ) : null}
-                </>
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-pine-500">
-                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-                  Dashboard
-                </div>
-              )}
-            </div>
-            {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
-          </div>
-        </div>
-
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-10">
-          {children}
-        </main>
+        {children}
       </div>
     </div>
+  );
+}
+
+export function DashboardShell({
+  children,
+  title,
+  subtitle,
+  backHref,
+  backLabel = "Back",
+  action,
+}: DashboardShellProps) {
+  return (
+    <>
+      <div className="platform-header-bar px-4 py-5 sm:px-8">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
+          <div>
+            {backHref ? (
+              <Link
+                href={backHref}
+                className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-pine-500 transition hover:text-pine-800"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                {backLabel}
+              </Link>
+            ) : null}
+            {title ? (
+              <>
+                <p className="eyebrow">Dashboard</p>
+                <h1 className="mt-1 font-display text-3xl text-pine-900 sm:text-4xl">
+                  {title}
+                </h1>
+                {subtitle ? (
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pine-600">
+                    {subtitle}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-pine-500">
+                <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                Dashboard
+              </div>
+            )}
+          </div>
+          {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
+        </div>
+      </div>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-10">
+        {children}
+      </main>
+    </>
   );
 }

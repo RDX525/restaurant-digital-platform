@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenVisible } from "@/hooks/useIntervalWhenVisible";
 import {
   CheckCircle2,
@@ -16,6 +16,7 @@ import type { PlacedOrder } from "@/lib/order/types";
 import { STATUS_LABELS, STATUS_TRANSITIONS } from "@/lib/order/constants";
 import type { OrderStatus } from "@/lib/order/constants";
 import { getErrorMessage, formatPrice, cn } from "@/lib/utils";
+import { replaceIfUnchanged } from "@/lib/react/replace-if-changed";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { DashboardResourceGate } from "@/components/dashboard/DashboardResourceGate";
 
@@ -63,25 +64,35 @@ export function OrdersDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
+  const ordersRequestRef = useRef<AbortController | null>(null);
 
   const loadOrders = useCallback(async () => {
     if (!restaurantId) return;
+    ordersRequestRef.current?.abort();
+    const controller = new AbortController();
+    ordersRequestRef.current = controller;
     try {
-      const response = await fetch(`/api/restaurants/${restaurantId}/orders`);
+      const response = await fetch(`/api/restaurants/${restaurantId}/orders`, {
+        signal: controller.signal,
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to load orders");
-      setOrders(payload);
+      setOrders((current) => replaceIfUnchanged(current, payload));
       setError(null);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(getErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [restaurantId]);
 
   useEffect(() => {
     if (!restaurantId) return;
     void loadOrders();
+    return () => {
+      ordersRequestRef.current?.abort();
+    };
   }, [loadOrders, restaurantId]);
 
   useIntervalWhenVisible(loadOrders, restaurantId ? POLL_INTERVAL_MS : null);
@@ -134,16 +145,21 @@ export function OrdersDashboard() {
     }
   }
 
-  const filtered =
-    filter === "all" ? orders : orders.filter((order) => order.status === filter);
+  const filtered = useMemo(
+    () => (filter === "all" ? orders : orders.filter((order) => order.status === filter)),
+    [filter, orders],
+  );
 
-  const counts = {
-    new: orders.filter((o) => o.status === "new").length,
-    active: orders.filter((o) =>
-      ["accepted", "preparing", "ready"].includes(o.status),
-    ).length,
-    completed: orders.filter((o) => o.status === "completed").length,
-  };
+  const counts = useMemo(
+    () => ({
+      new: orders.filter((order) => order.status === "new").length,
+      active: orders.filter((order) =>
+        ["accepted", "preparing", "ready"].includes(order.status),
+      ).length,
+      completed: orders.filter((order) => order.status === "completed").length,
+    }),
+    [orders],
+  );
 
   if (restaurantLoading || restaurantError || !restaurantId) {
     return (

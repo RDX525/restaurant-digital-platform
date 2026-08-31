@@ -14,7 +14,7 @@ import {
   resolveRestaurantPath,
   restaurantUsesRootPaths,
 } from "@/lib/restaurant/routing";
-import { useOrderCart } from "@/components/order/OrderCartProvider";
+import { useOrderCartCount } from "@/components/order/OrderCartProvider";
 import { cn } from "@/lib/utils";
 import { trackPageEvent } from "@/lib/analytics/client";
 
@@ -24,7 +24,7 @@ export function RestaurantHeader({
   restaurant: PublicRestaurant;
 }) {
   const pathname = usePathname();
-  const { itemCount } = useOrderCart();
+  const itemCount = useOrderCartCount();
   const useRootPaths = restaurantUsesRootPaths(pathname, restaurant.slug);
   const base = getRestaurantNavBase(restaurant.slug, useRootPaths);
   const orderHref =
@@ -54,6 +54,8 @@ export function RestaurantHeader({
               alt={`${restaurant.name} logo`}
               width={44}
               height={44}
+              priority
+              sizes="44px"
               className="h-11 w-11 rounded-full object-cover ring-2 ring-white shadow-soft"
             />
           ) : (
@@ -82,8 +84,9 @@ export function RestaurantHeader({
                 <Link
                   key={item.href}
                   href={href}
+                  prefetch
                   className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium touch-manipulation transition-colors duration-150",
+                    "rounded-full px-3 py-2 text-sm font-medium touch-manipulation transition-colors duration-150 xl:px-4",
                     active
                       ? "nav-gradient-active"
                       : "text-pine-600 hover:bg-white hover:text-pine-900",
@@ -97,7 +100,7 @@ export function RestaurantHeader({
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/menus" className="landing-demo-pill hidden sm:inline-flex">
+          <Link href="/dashboard/menus" className="landing-demo-pill hidden xl:inline-flex">
             <LogIn className="h-4 w-4" aria-hidden="true" />
             Staff dashboard
           </Link>
@@ -148,10 +151,12 @@ export function RestaurantHeader({
             <Link
               key={item.href}
               href={href}
+              prefetch
               className={cn(
-                "whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-medium transition-colors touch-manipulation shrink-0",
+                "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-medium transition-colors touch-manipulation",
                 active ? "nav-gradient-active" : "bg-white text-pine-600 ring-1 ring-pine-900/5",
               )}
+              aria-current={active ? "page" : undefined}
             >
               {item.label}
             </Link>

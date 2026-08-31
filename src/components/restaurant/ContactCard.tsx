@@ -2,19 +2,26 @@ import Link from "next/link";
 import { Mail, Phone, ArrowRight } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { formatAddress } from "@/lib/restaurant/service";
+import { getRequestRestaurantNav } from "@/lib/restaurant/request-nav";
 import { resolveRestaurantPath } from "@/lib/restaurant/routing";
 
 interface ContactCardProps {
   restaurant: PublicRestaurant;
 }
 
-export function ContactCard({ restaurant }: ContactCardProps) {
+export async function ContactCard({ restaurant }: ContactCardProps) {
+  const { useRootPaths } = await getRequestRestaurantNav(restaurant.slug);
   const address = formatAddress(restaurant);
   const reservationHref = resolveRestaurantPath(
     restaurant,
     restaurant.reservation_url ?? "reservations",
+    useRootPaths,
   );
-  const orderHref = resolveRestaurantPath(restaurant, restaurant.order_url ?? "order");
+  const orderHref = resolveRestaurantPath(
+    restaurant,
+    restaurant.order_url ?? "order",
+    useRootPaths,
+  );
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -50,7 +57,7 @@ export function ContactCard({ restaurant }: ContactCardProps) {
                 >
                   <Mail className="h-4 w-4" style={{ color: restaurant.primary_color }} aria-hidden="true" />
                 </span>
-                {restaurant.email}
+                <span className="min-w-0 break-all">{restaurant.email}</span>
               </a>
             </li>
           ) : null}

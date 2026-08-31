@@ -239,7 +239,7 @@ export function TablesDashboard() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-pine-900/5 bg-white shadow-soft">
-          <div className="overflow-x-auto">
+          <div className="max-w-full overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="border-b border-pine-900/5 bg-cream-50/80 text-xs uppercase tracking-[0.12em] text-pine-500">
                 <tr>

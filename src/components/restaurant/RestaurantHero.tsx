@@ -2,19 +2,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { CalendarDays, MapPin, ShoppingBag } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
-import { getRestaurantBasePath } from "@/lib/restaurant/seo";
-import { resolveRestaurantPath } from "@/lib/restaurant/routing";
+import { getRequestRestaurantNav } from "@/lib/restaurant/request-nav";
+import { getRestaurantNavHref, resolveRestaurantPath } from "@/lib/restaurant/routing";
 
 interface RestaurantHeroProps {
   restaurant: PublicRestaurant;
 }
 
-export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
-  const base = getRestaurantBasePath(restaurant.slug);
-  const orderHref = resolveRestaurantPath(restaurant, restaurant.order_url ?? "order");
+export async function RestaurantHero({ restaurant }: RestaurantHeroProps) {
+  const { useRootPaths } = await getRequestRestaurantNav(restaurant.slug);
+  const menuHref = getRestaurantNavHref(restaurant.slug, "menu", useRootPaths);
+  const orderHref = resolveRestaurantPath(
+    restaurant,
+    restaurant.order_url ?? "order",
+    useRootPaths,
+  );
   const reservationHref = resolveRestaurantPath(
     restaurant,
     restaurant.reservation_url ?? "reservations",
+    useRootPaths,
   );
 
   return (
@@ -52,11 +58,12 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
             width={80}
             height={80}
             className="mb-6 h-16 w-16 rounded-full border-2 border-white/20 object-cover shadow-elevated sm:h-20 sm:w-20"
+            sizes="80px"
           />
         ) : null}
 
         {restaurant.city ? (
-          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-white/70">
+          <p className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-white/70">
             <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
             {restaurant.city}
             {restaurant.region ? ` · ${restaurant.region}` : ""}
@@ -83,7 +90,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
             Book a table
           </Link>
           <Link
-            href={`${base}/menu`}
+            href={menuHref}
             className="inline-flex items-center rounded-full px-6 py-3.5 text-sm font-semibold text-white/90 underline-offset-4 transition hover:text-white hover:underline"
           >
             View menu

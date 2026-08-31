@@ -26,7 +26,10 @@ function LoginAuthContent() {
 
 export function LoginAuthSection() {
   return (
-    <section className="relative flex min-h-dvh flex-col overflow-hidden bg-mesh-light lg:border-l lg:border-pine-900/5">
+    <section
+      id="sign-in"
+      className="relative flex min-h-dvh flex-col overflow-x-clip bg-mesh-light lg:border-l lg:border-pine-900/5"
+    >
       <AuthPanelBackground />
       <header
         className="relative z-10 flex items-center justify-between px-5 py-4 lg:justify-end lg:px-6 lg:py-5"
@@ -42,8 +45,11 @@ export function LoginAuthSection() {
         </Link>
       </header>
 
-      <div className="relative z-10 flex flex-1 items-start justify-center px-5 py-4 sm:px-6 lg:items-center lg:px-8 lg:py-6">
-        <div className="w-full max-w-sm animate-slide-up opacity-0 xl:max-w-md">
+      <div
+        className="relative z-10 flex flex-1 items-start justify-center px-5 py-4 sm:px-6 lg:items-center lg:px-8 lg:py-6"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="w-full max-w-sm xl:max-w-md lg:animate-slide-up lg:opacity-0">
           <Suspense fallback={<LoginAuthFallback />}>
             <LoginAuthContent />
           </Suspense>

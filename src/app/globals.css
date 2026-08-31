@@ -17,6 +17,7 @@
     scroll-behavior: auto;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -179,7 +180,7 @@
   }
 
   .empty-state {
-    @apply rounded-3xl border border-dashed border-pine-900/10 bg-gradient-to-b from-cream-50 to-white p-12 text-center text-sm text-pine-500;
+    @apply rounded-3xl border border-dashed border-pine-900/10 bg-gradient-to-b from-cream-50 to-white p-8 text-center text-sm text-pine-500 sm:p-12;
   }
 
   .grain {
@@ -236,7 +237,8 @@
   }
 
   .platform-modal {
-    @apply platform-card max-h-[90vh] w-full overflow-y-auto;
+    @apply platform-card w-full overflow-y-auto;
+    max-height: min(90dvh, 90vh);
   }
 
   .platform-modal-backdrop {
@@ -250,6 +252,12 @@
     @apply overflow-x-auto overscroll-x-contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    touch-action: pan-x;
+  }
+
+  .menu-item-row {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 160px;
   }
 
   .scroll-x-touch::-webkit-scrollbar {
@@ -333,7 +341,7 @@
   }
 
   .landing-demo-pill {
-    @apply inline-flex items-center gap-2 rounded-full border border-pine-900/10 bg-white px-4 py-2 text-sm font-medium text-pine-700 shadow-soft transition hover:border-gold-500/30 hover:text-pine-900 hover:shadow-card;
+    @apply inline-flex min-h-11 items-center gap-2 rounded-full border border-pine-900/10 bg-white px-4 py-2 text-sm font-medium text-pine-700 shadow-soft transition hover:border-gold-500/30 hover:text-pine-900 hover:shadow-card;
   }
 
   .stagger-1 {

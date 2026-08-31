@@ -38,7 +38,7 @@ export function RestaurantFooter({
               <li key={item.href}>
                 <Link
                   href={getRestaurantNavHref(restaurant.slug, item.href, useRootPaths)}
-                  className="transition hover:text-white"
+                  className="inline-flex min-h-11 items-center text-white/80 transition hover:text-white"
                 >
                   {item.label}
                 </Link>
@@ -54,20 +54,20 @@ export function RestaurantFooter({
             {restaurant.phone ? (
               <a
                 href={`tel:${restaurant.phone}`}
-                className="flex items-center gap-2 transition hover:text-white"
+                className="flex min-h-11 items-center gap-2 text-white/80 transition hover:text-white"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 {restaurant.phone}
               </a>
             ) : null}
             {restaurant.email ? (
-              <a href={`mailto:${restaurant.email}`} className="block transition hover:text-white">
+              <a href={`mailto:${restaurant.email}`} className="flex min-h-11 items-center break-all text-white/80 transition hover:text-white">
                 {restaurant.email}
               </a>
             ) : null}
             <Link
               href={getRestaurantNavHref(restaurant.slug, "menu", useRootPaths)}
-              className="flex items-center gap-2 transition hover:text-white"
+              className="flex min-h-11 items-center gap-2 text-white/80 transition hover:text-white"
             >
               <Menu className="h-4 w-4" aria-hidden="true" />
               View menu
@@ -93,7 +93,7 @@ export function RestaurantFooter({
           <span aria-hidden="true"> · </span>
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-white/60 underline-offset-2 transition hover:text-white hover:underline sm:hidden"
+            className="inline-flex items-center gap-1 text-white/60 underline-offset-2 transition hover:text-white hover:underline xl:hidden"
           >
             <LogIn className="h-3 w-3" aria-hidden="true" />
             Staff sign in
