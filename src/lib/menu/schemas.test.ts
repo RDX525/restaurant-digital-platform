@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   categorySchema,
   menuItemSchema,
+  menuPatchSchema,
   menuSchema,
   modifierGroupSchema,
   modifierSchema,
@@ -20,6 +21,16 @@ describe("menuSchema", () => {
 
   it("rejects empty menu name", () => {
     expect(() => menuSchema.parse({ name: "" })).toThrow();
+  });
+});
+
+describe("menuPatchSchema", () => {
+  it("accepts an activate-only payload without filling other fields", () => {
+    expect(menuPatchSchema.parse({ is_active: true })).toEqual({ is_active: true });
+  });
+
+  it("rejects an empty patch", () => {
+    expect(() => menuPatchSchema.parse({})).toThrow();
   });
 });
 

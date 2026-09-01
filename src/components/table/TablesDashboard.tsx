@@ -337,8 +337,18 @@ export function TablesDashboard() {
                             className="mx-auto h-48 w-48"
                           />
                           <p className="mt-3 text-center text-xs text-pine-500">
-                            Guests scan to open the menu and start a verified dine-in session.
+                            Guests scan to open the menu and start a dine-in session.
                           </p>
+                          {table.token ? (
+                            <p className="mt-2 text-center text-xs">
+                              <a
+                                href={`/q/${table.token}`}
+                                className="font-medium text-pine-700 underline-offset-2 hover:underline"
+                              >
+                                Open scan link
+                              </a>
+                            </p>
+                          ) : null}
                         </div>
                       ) : null}
                     </td>

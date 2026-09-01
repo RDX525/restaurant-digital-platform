@@ -39,6 +39,10 @@ import {
   notifyReservationStatusAction,
 } from "@/lib/notification/dispatch";
 import { recordAnalyticsEvent } from "@/lib/analytics/data";
+import {
+  guestContactErrorMessage,
+  parseGuestContact,
+} from "@/lib/validation/guest-contact";
 
 function guestInput(input: CreateReservationInput) {
   return {
@@ -328,6 +332,20 @@ export async function createReservation(
     throw new ReservationValidationError("Restaurant not found.");
   }
 
+  const contact = parseGuestContact(
+    { email: input.guestEmail, phone: input.guestPhone },
+    restaurant.country,
+  );
+  if (!contact.ok) {
+    throw new ReservationValidationError(guestContactErrorMessage(contact.errors));
+  }
+
+  const guest: CreateReservationInput = {
+    ...input,
+    guestEmail: contact.email,
+    guestPhone: contact.phone,
+  };
+
   const settings = await loadReservationSettings(restaurant.id);
   if (!settings) {
     throw new ReservationValidationError("Reservations are not available.");
@@ -336,10 +354,10 @@ export async function createReservation(
   if (shouldUseDemoStore(restaurant.id)) {
     const record = createDemoReservation(
       restaurant.id,
-      input,
+      guest,
       restaurant.opening_hours,
     );
-    await notifyCustomerReservationCreated(restaurant.id, input, record.created_at);
+    await notifyCustomerReservationCreated(restaurant.id, guest, record.created_at);
     await notifyReservationReceived(record, restaurant.name);
     await recordAnalyticsEvent({
       restaurantId: restaurant.id,
@@ -352,10 +370,10 @@ export async function createReservation(
   if (!isSupabaseConfigured()) {
     const record = createDemoReservation(
       restaurant.id,
-      input,
+      guest,
       restaurant.opening_hours,
     );
-    await notifyCustomerReservationCreated(restaurant.id, input, record.created_at);
+    await notifyCustomerReservationCreated(restaurant.id, guest, record.created_at);
     await notifyReservationReceived(record, restaurant.name);
     await recordAnalyticsEvent({
       restaurantId: restaurant.id,
@@ -366,7 +384,7 @@ export async function createReservation(
   }
 
   const supabase = await createClient();
-  const existing = await listReservationsForRestaurant(restaurant.id, { date: input.date });
+  const existing = await listReservationsForRestaurant(restaurant.id, { date: guest.date });
 
   validateReservationSlot({
     settings,
@@ -392,9 +410,9 @@ export async function createReservation(
       created_at: reservation.createdAt,
       updated_at: reservation.updatedAt,
     })),
-    date: input.date,
-    time: input.time,
-    guestCount: input.guestCount,
+    date: guest.date,
+    time: guest.time,
+    guestCount: guest.guestCount,
     restaurantOpeningHours: restaurant.opening_hours,
   });
 
@@ -403,14 +421,14 @@ export async function createReservation(
     .insert({
       restaurant_id: restaurant.id,
       status: "pending",
-      guest_name: input.guestName.trim(),
-      guest_email: input.guestEmail.trim().toLowerCase(),
-      guest_phone: input.guestPhone.trim(),
-      guest_count: input.guestCount,
-      reservation_date: input.date,
-      reservation_time: input.time.slice(0, 5),
+      guest_name: guest.guestName.trim(),
+      guest_email: guest.guestEmail,
+      guest_phone: guest.guestPhone,
+      guest_count: guest.guestCount,
+      reservation_date: guest.date,
+      reservation_time: guest.time.slice(0, 5),
       timezone: settings.timezone,
-      special_request: input.specialRequest?.trim() || null,
+      special_request: guest.specialRequest?.trim() || null,
       notifications: [],
     })
     .select("*")
@@ -418,7 +436,7 @@ export async function createReservation(
 
   if (error) throw error;
   const reservation = mapRecord(mapReservationRow(data));
-  await notifyCustomerReservationCreated(restaurant.id, input, reservation.createdAt);
+  await notifyCustomerReservationCreated(restaurant.id, guest, reservation.createdAt);
   await notifyReservationReceived(mapReservationRow(data), restaurant.name);
   await recordAnalyticsEvent({
     restaurantId: restaurant.id,

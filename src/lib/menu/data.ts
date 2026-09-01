@@ -16,7 +16,7 @@ import {
   filterPublicMenu,
 } from "@/lib/menu/service";
 import { fetchActiveMenuForRestaurant } from "@/lib/restaurant/service";
-import type { FullMenu, Menu } from "@/lib/menu/types";
+import { PUBLIC_MENU_CACHE_TAG } from "@/lib/cache/public-site";
 
 export async function loadMenusForRestaurant(restaurantId: string): Promise<Menu[]> {
   if (isDemoRestaurantId(restaurantId) && !isSupabaseConfigured()) {
@@ -107,6 +107,7 @@ const getCachedPublicMenuForRestaurant =
     ? loadPublicMenuForRestaurantUncached
     : unstable_cache(loadPublicMenuForRestaurantUncached, ["public-menu-for-restaurant"], {
         revalidate: 60,
+        tags: [PUBLIC_MENU_CACHE_TAG],
       });
 
 async function loadPublicMenuForRestaurantUncached(restaurantId: string) {

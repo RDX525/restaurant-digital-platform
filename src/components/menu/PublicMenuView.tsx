@@ -20,7 +20,9 @@ export function PublicMenuView({ menuId }: { menuId: string }) {
         menu.is_active ? (
           <MenuPreview menu={menu} publicView />
         ) : (
-          <div className="empty-state">This menu is currently inactive.</div>
+          <div className="empty-state">
+            {menu.name} is a draft. Only the restaurant&apos;s live menu is shown to guests.
+          </div>
         )
       ) : null}
     </>

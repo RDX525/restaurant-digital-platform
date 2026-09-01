@@ -5,10 +5,13 @@ import { getErrorMessage } from "@/lib/utils";
 
 export function jsonError(error: unknown, status = 400) {
   if (error instanceof ZodError) {
+    const fieldErrors = error.flatten().fieldErrors;
+    const firstFieldMessage = Object.values(fieldErrors).flat()[0];
+    const firstFormMessage = error.flatten().formErrors[0];
     return NextResponse.json(
       {
-        error: "Validation failed",
-        details: error.flatten().fieldErrors,
+        error: firstFieldMessage ?? firstFormMessage ?? "Validation failed",
+        details: fieldErrors,
       },
       { status: 422 },
     );

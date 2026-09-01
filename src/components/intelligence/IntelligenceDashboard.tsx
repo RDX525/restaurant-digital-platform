@@ -162,9 +162,10 @@ export function IntelligenceDashboard() {
           <button
             type="button"
             onClick={() => void loadBrief()}
+            disabled={loadingBrief}
             className="btn-secondary inline-flex items-center gap-2 text-sm"
           >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <RefreshCw className={`h-4 w-4 ${loadingBrief ? "animate-spin" : ""}`} aria-hidden="true" />
             Refresh
           </button>
         </div>

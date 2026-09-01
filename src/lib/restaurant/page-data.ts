@@ -1,17 +1,39 @@
+import { cookies, headers } from "next/headers";
 import { loadRestaurantBySlug, loadRestaurantGallery } from "@/lib/restaurant/data";
 import { notFound } from "next/navigation";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
+import { validateTableSession } from "@/lib/table/data";
+import { TABLE_SESSION_COOKIE } from "@/lib/table/session";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function canViewUnpublishedRestaurant(slug: string): Promise<boolean> {
+  const headerStore = await headers();
+  if (headerStore.get("x-restaurant-preview") === "1") {
+    return true;
+  }
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get(TABLE_SESSION_COOKIE)?.value;
+  if (!sessionToken) return false;
+
+  const session = await validateTableSession(sessionToken);
+  return session?.restaurant_slug === slug;
+}
+
+export async function loadGuestRestaurant(slug: string): Promise<PublicRestaurant | null> {
+  const includeUnpublished = await canViewUnpublishedRestaurant(slug);
+  return loadRestaurantBySlug(slug, includeUnpublished);
+}
 
 export async function getPublicRestaurant(
   params: Promise<{ slug: string }>,
   options?: { galleryLimit?: number },
 ): Promise<PublicRestaurant> {
   const { slug } = await params;
-  const restaurant = await loadRestaurantBySlug(slug, false);
+  const restaurant = await loadGuestRestaurant(slug);
 
   if (!restaurant) notFound();
 

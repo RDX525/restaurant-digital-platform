@@ -1,13 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
 import { fetchRestaurantById } from "@/lib/restaurant/service";
 import { jsonError, jsonOk } from "@/lib/api";
+import { guardRestaurantRoute } from "@/lib/auth/guards";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  RESTAURANT_ASSETS_BUCKET,
+  restaurantAssetExtension,
+  restaurantAssetObjectPath,
+} from "@/lib/restaurant/storage";
+import { revalidatePublicRestaurantSite } from "@/lib/cache/revalidate-public-site";
 
-const BUCKET = "restaurant-assets";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseConfigured()) {
+      return jsonError(
+        new Error("Configure Supabase in .env.local to upload branding assets."),
+        503,
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const restaurantId = formData.get("restaurantId");
@@ -21,6 +35,8 @@ export async function POST(request: Request) {
       return jsonError(new Error("restaurantId is required"), 422);
     }
 
+    await guardRestaurantRoute(restaurantId, "website.manage");
+
     if (typeof assetType !== "string" || !["logo", "hero"].includes(assetType)) {
       return jsonError(new Error("assetType must be logo or hero"), 422);
     }
@@ -33,34 +49,48 @@ export async function POST(request: Request) {
       return jsonError(new Error("Image must be 5MB or smaller"), 422);
     }
 
-    const extension = file.type.split("/")[1]?.replace("svg+xml", "svg") ?? "jpg";
-    const path = `${restaurantId}/${assetType}-${Date.now()}.${extension}`;
+    const path = restaurantAssetObjectPath(
+      restaurantId,
+      assetType,
+      restaurantAssetExtension(file.type),
+    );
     const supabase = await createClient();
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
+      .from(RESTAURANT_ASSETS_BUCKET)
       .upload(path, buffer, { contentType: file.type, upsert: true });
 
     if (uploadError) throw uploadError;
 
-    const { data: publicData } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    const { data: publicData } = supabase.storage
+      .from(RESTAURANT_ASSETS_BUCKET)
+      .getPublicUrl(path);
     const field = assetType === "logo" ? "logo_url" : "hero_image_url";
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("restaurants")
       .update({
         [field]: publicData.publicUrl,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", restaurantId);
+      .eq("id", restaurantId)
+      .select("*")
+      .single();
 
     if (error) throw error;
+    if (!updated) {
+      return jsonError(new Error("Restaurant branding could not be saved."), 500);
+    }
 
-    const restaurant = await fetchRestaurantById(supabase, restaurantId);
+    const restaurant = await fetchRestaurantById(supabase, restaurantId, {
+      galleryLimit: 50,
+    });
     if (!restaurant) {
       return jsonError(new Error("Restaurant not found"), 404);
     }
+
+    revalidatePublicRestaurantSite({ slug: restaurant.slug });
 
     return jsonOk({ url: publicData.publicUrl, restaurant });
   } catch (error) {

@@ -6,6 +6,7 @@ import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 import type { AvailabilitySlot } from "@/lib/reservation/types";
 import { getErrorMessage } from "@/lib/utils";
+import { parseGuestContact } from "@/lib/validation/guest-contact";
 import Link from "next/link";
 
 interface ReservationFormProps {
@@ -34,6 +35,9 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; phone?: string; name?: string }>(
+    {},
+  );
 
   const loadAvailability = useCallback(async () => {
     if (!form.date) {
@@ -73,16 +77,31 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+    setFieldErrors({});
 
     try {
+      if (!form.name.trim()) {
+        setFieldErrors({ name: "Enter your name" });
+        throw new Error("Please check your contact details.");
+      }
+
+      const contact = parseGuestContact(
+        { email: form.email, phone: form.phone },
+        restaurant.country,
+      );
+      if (!contact.ok) {
+        setFieldErrors(contact.errors);
+        throw new Error("Please check your contact details.");
+      }
+
       const response = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           restaurantSlug: restaurant.slug,
-          guestName: form.name,
-          guestEmail: form.email,
-          guestPhone: form.phone,
+          guestName: form.name.trim(),
+          guestEmail: contact.email,
+          guestPhone: contact.phone,
           guestCount: Number(form.guests),
           date: form.date,
           time: form.time,
@@ -140,9 +159,29 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
-        <Field label="Phone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} required />
-        <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
+        <Field
+          label="Name"
+          value={form.name}
+          onChange={(value) => setForm({ ...form, name: value })}
+          required
+          error={fieldErrors.name}
+        />
+        <Field
+          label="Phone"
+          type="tel"
+          value={form.phone}
+          onChange={(value) => setForm({ ...form, phone: value })}
+          required
+          error={fieldErrors.phone}
+        />
+        <Field
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(value) => setForm({ ...form, email: value })}
+          required
+          error={fieldErrors.email}
+        />
         <Field
           label="Guests"
           type="number"
@@ -222,6 +261,7 @@ function Field({
   required = false,
   min,
   max,
+  error,
 }: {
   label: string;
   value: string;
@@ -230,6 +270,7 @@ function Field({
   required?: boolean;
   min?: number;
   max?: number;
+  error?: string;
 }) {
   const fieldId = `reservation-${label.toLowerCase()}`;
   return (
@@ -246,7 +287,11 @@ function Field({
         max={max}
         onChange={(event) => onChange(event.target.value)}
         className="input"
+        aria-invalid={Boolean(error)}
+        autoComplete={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
+        placeholder={type === "tel" ? "021 123 4567" : undefined}
       />
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
     </div>
   );
 }

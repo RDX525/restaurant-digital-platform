@@ -74,7 +74,8 @@ export function MenuEditor({ menuId }: MenuEditorProps) {
     if (!menu) return;
     await runAction(async () => {
       await saveMenu(menuId, { is_active: !menu.is_active });
-    }, menu.is_active ? "Menu deactivated" : "Menu activated");
+      router.refresh();
+    }, menu.is_active ? "Menu set to draft" : "Menu is now live. Other menus were set to draft.");
   }
 
   async function handleDeleteMenu() {

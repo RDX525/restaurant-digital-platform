@@ -29,6 +29,7 @@ import { useTableSession } from "@/components/table/TableSessionProvider";
 import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 import { cn, formatPrice } from "@/lib/utils";
 import { trackPageEvent } from "@/lib/analytics/client";
+import { parseGuestContact, guestContactErrorMessage } from "@/lib/validation/guest-contact";
 
 interface OrderCheckoutProps {
   restaurant: PublicRestaurant;
@@ -45,6 +46,12 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  }>({});
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
   const [customer, setCustomer] = useState<CustomerDetails>({
     name: "",
@@ -98,6 +105,23 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
     setError(null);
 
     try {
+      const contact = parseGuestContact(
+        { email: customer.email, phone: customer.phone },
+        restaurant.country,
+      );
+      if (!contact.ok) {
+        setFieldErrors(contact.errors);
+        setStep("details");
+        throw new Error(guestContactErrorMessage(contact.errors));
+      }
+
+      const customerPayload = {
+        ...customer,
+        name: customer.name.trim(),
+        email: contact.email,
+        phone: contact.phone,
+      };
+
       const idempotencyKey = getOrCreateIdempotencyKey(restaurant.slug);
 
       const orderResponse = await fetch("/api/orders", {
@@ -112,7 +136,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
             modifierIds: item.modifiers.map((modifier) => modifier.id),
             specialInstructions: item.specialInstructions,
           })),
-          customer,
+          customer: customerPayload,
         }),
       });
 
@@ -157,11 +181,11 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
           `kati-customer-email:${restaurant.slug}`,
-          customer.email,
+          customerPayload.email,
         );
         if (orderHistoryAccessToken) {
           window.sessionStorage.setItem(
-            `kati-order-history-token:${restaurant.slug}:${customer.email.trim().toLowerCase()}`,
+            `kati-order-history-token:${restaurant.slug}:${customerPayload.email}`,
             orderHistoryAccessToken,
           );
         }
@@ -221,14 +245,37 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
           tableLabel={tableSession?.tableLabel}
           onChange={setCustomer}
           onBack={() => setStep("cart")}
+          fieldErrors={fieldErrors}
           onContinue={() => {
-            if (!customer.name.trim() || !customer.email.trim() || !customer.phone.trim()) {
-              setError("Please complete your contact details.");
-              return;
+            const nextErrors: typeof fieldErrors = {};
+            if (!customer.name.trim()) {
+              nextErrors.name = "Enter your name";
+            }
+            const contact = parseGuestContact(
+              { email: customer.email, phone: customer.phone },
+              restaurant.country,
+            );
+            if (!contact.ok) {
+              if (contact.errors.email) nextErrors.email = contact.errors.email;
+              if (contact.errors.phone) nextErrors.phone = contact.errors.phone;
             }
             if (customer.orderType === "delivery" && !customer.address.trim()) {
-              setError("Please enter a delivery address.");
+              nextErrors.address = "Enter a delivery address";
+            }
+            if (Object.keys(nextErrors).length > 0) {
+              setFieldErrors(nextErrors);
+              setError("Please check your contact details.");
               return;
+            }
+
+            setFieldErrors({});
+            if (contact.ok) {
+              setCustomer({
+                ...customer,
+                name: customer.name.trim(),
+                email: contact.email,
+                phone: contact.phone,
+              });
             }
             setError(null);
             setStep("payment");
@@ -429,6 +476,7 @@ function DetailsStep({
   onBack,
   onContinue,
   error,
+  fieldErrors,
 }: {
   customer: CustomerDetails;
   restaurant: PublicRestaurant;
@@ -439,6 +487,12 @@ function DetailsStep({
   onBack: () => void;
   onContinue: () => void;
   error: string | null;
+  fieldErrors: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
 }) {
   const orderTypes = isDineIn
     ? (["dine_in"] as const)
@@ -467,12 +521,16 @@ function DetailsStep({
             value={customer.name}
             onChange={(value) => onChange({ ...customer, name: value })}
             autoComplete="name"
+            error={fieldErrors.name}
           />
           <Field
             label="Phone"
+            type="tel"
             value={customer.phone}
             onChange={(value) => onChange({ ...customer, phone: value })}
             autoComplete="tel"
+            placeholder="021 123 4567"
+            error={fieldErrors.phone}
           />
           <div className="sm:col-span-2">
             <Field
@@ -481,6 +539,7 @@ function DetailsStep({
               value={customer.email}
               onChange={(value) => onChange({ ...customer, email: value })}
               autoComplete="email"
+              error={fieldErrors.email}
             />
           </div>
         </div>
@@ -527,7 +586,11 @@ function DetailsStep({
               rows={3}
               className="input resize-none"
               placeholder="Street, suburb, city, postcode"
+              aria-invalid={Boolean(fieldErrors.address)}
             />
+            {fieldErrors.address ? (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.address}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -746,12 +809,16 @@ function Field({
   onChange,
   type = "text",
   autoComplete,
+  error,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   autoComplete?: string;
+  error?: string;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -761,8 +828,11 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
+        placeholder={placeholder}
+        aria-invalid={Boolean(error)}
         className="input"
       />
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
     </div>
   );
 }

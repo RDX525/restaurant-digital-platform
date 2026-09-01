@@ -5,7 +5,7 @@ export default function MenusPage() {
   return (
     <DashboardShell
       title="Menus"
-      subtitle="Create and manage menus for your restaurant."
+      subtitle="Only one menu can be live at a time. Activating a menu sets the others to draft."
     >
       <MenusDashboard />
     </DashboardShell>

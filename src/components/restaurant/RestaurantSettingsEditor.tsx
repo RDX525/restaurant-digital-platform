@@ -6,8 +6,19 @@ import { ExternalLink, Eye, Save, Trash2 } from "lucide-react";
 import { OpeningHoursEditor } from "@/components/restaurant/OpeningHoursEditor";
 import type { PublicRestaurant, GalleryImage, SocialLinks } from "@/lib/restaurant/types";
 import { normalizeOpeningHours } from "@/lib/restaurant/opening-hours";
+import { postFormDataWithProgress } from "@/lib/upload/form-progress";
 import { getErrorMessage } from "@/lib/utils";
 import { getRestaurantBasePath } from "@/lib/restaurant/seo";
+
+type BrandingAssetType = "logo" | "hero";
+
+interface BrandingUploadState {
+  type: BrandingAssetType;
+  fileName: string;
+  progress: number;
+  phase: "uploading" | "saving" | "done" | "error";
+  error?: string;
+}
 
 interface RestaurantSettingsEditorProps {
   restaurantId: string;
@@ -22,6 +33,8 @@ function preparePayload(restaurant: PublicRestaurant) {
 
   const rest = { ...restaurant };
   delete (rest as Partial<PublicRestaurant>).gallery;
+  delete (rest as Partial<PublicRestaurant>).logo_url;
+  delete (rest as Partial<PublicRestaurant>).hero_image_url;
 
   return {
     ...rest,
@@ -49,12 +62,21 @@ export function RestaurantSettingsEditor({
   const [error, setError] = useState<string | null>(null);
   const [galleryUrl, setGalleryUrl] = useState("");
   const [galleryCaption, setGalleryCaption] = useState("");
+  const [showGalleryLink, setShowGalleryLink] = useState(false);
+  const [galleryUpload, setGalleryUpload] = useState<Omit<BrandingUploadState, "type"> | null>(
+    null,
+  );
+  const [brandingUploads, setBrandingUploads] = useState<
+    Partial<Record<BrandingAssetType, BrandingUploadState>>
+  >({});
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/restaurants/${restaurantId}`);
+        const response = await fetch(`/api/restaurants/${restaurantId}`, {
+          cache: "no-store",
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Failed to load");
         setRestaurant({
@@ -97,26 +119,148 @@ export function RestaurantSettingsEditor({
     }
   }
 
-  async function uploadAsset(assetType: "logo" | "hero", file: File) {
+  function setBrandingUpload(
+    assetType: BrandingAssetType,
+    next: BrandingUploadState,
+  ) {
+    setBrandingUploads((current) => ({ ...current, [assetType]: next }));
+  }
+
+  async function uploadAsset(assetType: BrandingAssetType, file: File) {
+    setError(null);
+    setMessage(null);
+    setBrandingUpload(assetType, {
+      type: assetType,
+      fileName: file.name,
+      progress: 1,
+      phase: "uploading",
+    });
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("restaurantId", restaurantId);
     formData.append("assetType", assetType);
-    const response = await fetch("/api/restaurants/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? "Upload failed");
-    setRestaurant({
-      ...data.restaurant,
-      opening_hours: normalizeOpeningHours(data.restaurant.opening_hours),
-      social_links: data.restaurant.social_links ?? {},
-    });
+
+    try {
+      const { status, body } = await postFormDataWithProgress(
+        "/api/restaurants/upload",
+        formData,
+        (percent) => {
+          setBrandingUpload(assetType, {
+            type: assetType,
+            fileName: file.name,
+            progress: percent,
+            phase: percent >= 90 ? "saving" : "uploading",
+          });
+        },
+      );
+
+      const data = body as {
+        error?: string;
+        url?: string;
+        restaurant?: PublicRestaurant;
+      };
+
+      if (status < 200 || status >= 300 || !data.url) {
+        throw new Error(data.error ?? "Upload failed");
+      }
+
+      setRestaurant((current) => {
+        const base = data.restaurant ?? current;
+        if (!base) return current;
+        return {
+          ...current,
+          ...base,
+          opening_hours: normalizeOpeningHours(base.opening_hours),
+          social_links: base.social_links ?? {},
+          gallery: current?.gallery ?? base.gallery ?? [],
+          logo_url: assetType === "logo" ? data.url : (current?.logo_url ?? base.logo_url),
+          hero_image_url:
+            assetType === "hero" ? data.url : (current?.hero_image_url ?? base.hero_image_url),
+        };
+      });
+      setBrandingUpload(assetType, {
+        type: assetType,
+        fileName: file.name,
+        progress: 100,
+        phase: "done",
+      });
+      setMessage(
+        assetType === "logo"
+          ? "Logo uploaded and saved."
+          : "Hero image uploaded and saved.",
+      );
+    } catch (err) {
+      const messageText = getErrorMessage(err);
+      setBrandingUpload(assetType, {
+        type: assetType,
+        fileName: file.name,
+        progress: 0,
+        phase: "error",
+        error: messageText,
+      });
+      setError(messageText);
+    }
   }
 
-  async function addGalleryImage() {
+  async function uploadGalleryFile(file: File) {
+    setError(null);
+    setMessage(null);
+    setGalleryUpload({
+      fileName: file.name,
+      progress: 1,
+      phase: "uploading",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("caption", galleryCaption.trim());
+    formData.append("sortOrder", String(restaurant?.gallery.length ?? 0));
+
+    try {
+      const { status, body } = await postFormDataWithProgress(
+        `/api/restaurants/${restaurantId}/gallery/upload`,
+        formData,
+        (percent) => {
+          setGalleryUpload({
+            fileName: file.name,
+            progress: percent,
+            phase: percent >= 90 ? "saving" : "uploading",
+          });
+        },
+      );
+
+      const data = body as GalleryImage & { error?: string };
+      if (status < 200 || status >= 300 || !data.id) {
+        throw new Error(data.error ?? "Upload failed");
+      }
+
+      setRestaurant((current) =>
+        current ? { ...current, gallery: [...current.gallery, data] } : current,
+      );
+      setGalleryCaption("");
+      setGalleryUpload({
+        fileName: file.name,
+        progress: 100,
+        phase: "done",
+      });
+      setMessage("Gallery photo uploaded and saved.");
+    } catch (err) {
+      const messageText = getErrorMessage(err);
+      setGalleryUpload({
+        fileName: file.name,
+        progress: 0,
+        phase: "error",
+        error: messageText,
+      });
+      setError(messageText);
+    }
+  }
+
+  async function addGalleryImageFromUrl() {
     if (!galleryUrl.trim()) return;
+    setError(null);
+    setMessage(null);
     const response = await fetch(`/api/restaurants/${restaurantId}/gallery`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -133,6 +277,7 @@ export function RestaurantSettingsEditor({
     );
     setGalleryUrl("");
     setGalleryCaption("");
+    setMessage("Gallery photo added from link.");
   }
 
   async function deleteGalleryImage(imageId: string) {
@@ -271,51 +416,265 @@ export function RestaurantSettingsEditor({
 
       <div className="card-elevated space-y-4 p-6">
         <h2 className="font-display text-lg text-pine-900">Branding assets</h2>
-        <div className="flex flex-wrap gap-4">
-          <label className="btn-secondary cursor-pointer">
-            Upload logo
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void uploadAsset("logo", file).catch((err) => setError(getErrorMessage(err)));
-              e.target.value = "";
-            }} />
-          </label>
-          <label className="btn-secondary cursor-pointer">
-            Upload hero image
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void uploadAsset("hero", file).catch((err) => setError(getErrorMessage(err)));
-              e.target.value = "";
-            }} />
-          </label>
+        <p className="text-sm text-pine-600">
+          JPEG, PNG, WebP, or SVG up to 5MB. You will see upload progress until the file is saved.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <BrandingAssetCard
+            label="Logo"
+            imageUrl={restaurant.logo_url}
+            upload={brandingUploads.logo}
+            busy={Boolean(
+              brandingUploads.logo &&
+                (brandingUploads.logo.phase === "uploading" ||
+                  brandingUploads.logo.phase === "saving"),
+            )}
+            onFile={(file) => void uploadAsset("logo", file)}
+          />
+          <BrandingAssetCard
+            label="Hero image"
+            imageUrl={restaurant.hero_image_url}
+            upload={brandingUploads.hero}
+            busy={Boolean(
+              brandingUploads.hero &&
+                (brandingUploads.hero.phase === "uploading" ||
+                  brandingUploads.hero.phase === "saving"),
+            )}
+            onFile={(file) => void uploadAsset("hero", file)}
+          />
         </div>
       </div>
 
       <div className="card-elevated space-y-4 p-6">
         <h2 className="font-display text-lg text-pine-900">Gallery</h2>
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-          <input className="input" placeholder="Image URL" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
-          <input className="input" placeholder="Caption" value={galleryCaption} onChange={(e) => setGalleryCaption(e.target.value)} />
-          <button type="button" className="btn-secondary" onClick={() => void addGalleryImage().catch((err) => setError(getErrorMessage(err)))}>
-            Add image
-          </button>
-        </div>
-        <ul className="space-y-2">
-          {restaurant.gallery.map((image: GalleryImage) => (
-            <li key={image.id} className="flex items-center justify-between gap-3 rounded-xl border border-pine-900/5 bg-cream-50 px-4 py-3 text-sm text-pine-700">
-              <span className="truncate">{image.caption ?? image.image_url}</span>
-              <button
-                type="button"
-                className="btn-ghost shrink-0 px-2 py-1 text-red-600"
-                onClick={() => void deleteGalleryImage(image.id).catch((err) => setError(getErrorMessage(err)))}
+        <p className="text-sm text-pine-600">
+          Upload photos from your computer. JPEG, PNG, or WebP up to 5MB.
+        </p>
+        <input
+          className="input"
+          placeholder="Caption (optional)"
+          value={galleryCaption}
+          onChange={(event) => setGalleryCaption(event.target.value)}
+        />
+        <label
+          className={`btn-primary w-full cursor-pointer justify-center sm:w-auto ${
+            galleryUpload?.phase === "uploading" || galleryUpload?.phase === "saving"
+              ? "pointer-events-none opacity-60"
+              : ""
+          }`}
+        >
+          {galleryUpload?.phase === "uploading" || galleryUpload?.phase === "saving"
+            ? "Uploading…"
+            : "Upload photo"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            disabled={
+              galleryUpload?.phase === "uploading" || galleryUpload?.phase === "saving"
+            }
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void uploadGalleryFile(file);
+              event.target.value = "";
+            }}
+          />
+        </label>
+        {galleryUpload ? (
+          <div className="space-y-2" aria-live="polite">
+            {galleryUpload.phase === "uploading" || galleryUpload.phase === "saving" ? (
+              <div
+                className="h-2 overflow-hidden rounded-full bg-pine-200"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={galleryUpload.progress}
+                aria-label="Gallery upload progress"
               >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-                <span className="sr-only">Delete</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                <div
+                  className="h-full rounded-full bg-pine-700 transition-[width] duration-200"
+                  style={{ width: `${galleryUpload.progress}%` }}
+                />
+              </div>
+            ) : null}
+            <p
+              className={`text-xs ${
+                galleryUpload.phase === "error"
+                  ? "text-red-700"
+                  : galleryUpload.phase === "done"
+                    ? "text-pine-700"
+                    : "text-pine-500"
+              }`}
+            >
+              {brandingStatusLabel(galleryUpload)}
+            </p>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className="text-sm font-medium text-pine-600 underline-offset-2 hover:underline"
+          onClick={() => setShowGalleryLink((current) => !current)}
+        >
+          {showGalleryLink ? "Hide web link" : "Add from a web link instead"}
+        </button>
+        {showGalleryLink ? (
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <input
+              className="input"
+              placeholder="https://example.com/photo.jpg"
+              value={galleryUrl}
+              onChange={(event) => setGalleryUrl(event.target.value)}
+            />
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() =>
+                void addGalleryImageFromUrl().catch((err) => setError(getErrorMessage(err)))
+              }
+            >
+              Add link
+            </button>
+          </div>
+        ) : null}
+
+        {restaurant.gallery.length === 0 ? (
+          <p className="text-sm text-pine-400">No gallery photos yet.</p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {restaurant.gallery.map((image: GalleryImage) => (
+              <li
+                key={image.id}
+                className="overflow-hidden rounded-2xl border border-pine-900/10 bg-cream-50"
+              >
+                <img
+                  src={image.image_url}
+                  alt={image.caption ?? "Gallery photo"}
+                  className="h-36 w-full object-cover"
+                />
+                <div className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-pine-700">
+                  <span className="truncate">{image.caption ?? "No caption"}</span>
+                  <button
+                    type="button"
+                    className="btn-ghost shrink-0 px-2 py-1 text-red-600"
+                    onClick={() =>
+                      void deleteGalleryImage(image.id).catch((err) =>
+                        setError(getErrorMessage(err)),
+                      )
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">Delete</span>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
+    </div>
+  );
+}
+
+function brandingStatusLabel(upload: Omit<BrandingUploadState, "type">): string {
+  if (upload.phase === "uploading") {
+    return `Uploading ${upload.fileName}… ${upload.progress}%`;
+  }
+  if (upload.phase === "saving") {
+    return `Saving ${upload.fileName} on the server…`;
+  }
+  if (upload.phase === "done") {
+    return `${upload.fileName} uploaded.`;
+  }
+  return upload.error ?? "Upload failed.";
+}
+
+function BrandingAssetCard({
+  label,
+  imageUrl,
+  upload,
+  busy,
+  onFile,
+}: {
+  label: string;
+  imageUrl: string | null;
+  upload?: BrandingUploadState;
+  busy: boolean;
+  onFile: (file: File) => void;
+}) {
+  const [previewFailed, setPreviewFailed] = useState(false);
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [imageUrl]);
+
+  return (
+    <div className="rounded-2xl border border-pine-900/10 bg-cream-50 p-4">
+      <p className="text-sm font-semibold text-pine-800">{label}</p>
+      <div className="mt-3 overflow-hidden rounded-xl border border-pine-900/10 bg-white">
+        {imageUrl && !previewFailed ? (
+          <img
+            src={imageUrl}
+            alt={`${label} preview`}
+            className="h-32 w-full object-contain"
+            onError={() => setPreviewFailed(true)}
+          />
+        ) : (
+          <div className="flex h-32 items-center justify-center px-3 text-center text-sm text-pine-400">
+            {imageUrl
+              ? "Uploaded — preview could not be displayed"
+              : "Not uploaded yet"}
+          </div>
+        )}
+      </div>
+      <label
+        className={`btn-secondary mt-3 w-full cursor-pointer justify-center ${busy ? "pointer-events-none opacity-60" : ""}`}
+      >
+        {busy ? "Uploading…" : imageUrl ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          className="hidden"
+          disabled={busy}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onFile(file);
+            event.target.value = "";
+          }}
+        />
+      </label>
+      {upload ? (
+        <div className="mt-3 space-y-2" aria-live="polite">
+          {upload.phase === "uploading" || upload.phase === "saving" ? (
+            <div
+              className="h-2 overflow-hidden rounded-full bg-pine-200"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={upload.progress}
+              aria-label={`${label} upload progress`}
+            >
+              <div
+                className="h-full rounded-full bg-pine-700 transition-[width] duration-200"
+                style={{ width: `${upload.progress}%` }}
+              />
+            </div>
+          ) : null}
+          <p
+            className={`text-xs ${
+              upload.phase === "error"
+                ? "text-red-700"
+                : upload.phase === "done"
+                  ? "text-pine-700"
+                  : "text-pine-500"
+            }`}
+          >
+            {brandingStatusLabel(upload)}
+          </p>
+        </div>
+      ) : imageUrl ? (
+        <p className="mt-3 text-xs text-pine-500">Saved on your website.</p>
+      ) : null}
     </div>
   );
 }

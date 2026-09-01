@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { RestaurantShell } from "@/components/restaurant/RestaurantShell";
 import { PreviewBanner } from "@/components/restaurant/PreviewBanner";
 import { StructuredData } from "@/components/restaurant/StructuredData";
-import { loadRestaurantBySlug } from "@/lib/restaurant/data";
+import { loadGuestRestaurant } from "@/lib/restaurant/page-data";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -22,7 +22,7 @@ export default async function RestaurantLayout({
   params,
 }: LayoutProps) {
   const { slug } = await params;
-  const restaurant = await loadRestaurantBySlug(slug, false);
+  const restaurant = await loadGuestRestaurant(slug);
 
   if (!restaurant) notFound();
 

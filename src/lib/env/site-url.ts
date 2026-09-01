@@ -2,6 +2,22 @@ import { isProductionRuntime } from "./runtime";
 
 const LOCALHOST_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
+export function isLocalSiteUrl(url: string): boolean {
+  return LOCALHOST_PATTERN.test(url.replace(/\/$/, ""));
+}
+
+/** Prefer a configured public URL; otherwise use the incoming request origin. */
+export function resolveQrSiteUrl(requestOrigin?: string): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (configured && !isLocalSiteUrl(configured)) {
+    return configured;
+  }
+  if (requestOrigin) {
+    return requestOrigin.replace(/\/$/, "");
+  }
+  return getSiteUrl();
+}
+
 function isProductionServerRuntime(): boolean {
   return isProductionRuntime() && process.env.NEXT_PHASE !== "phase-production-build";
 }

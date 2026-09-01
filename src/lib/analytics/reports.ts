@@ -23,13 +23,20 @@ function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function isPaidOrder(order: OrderRecord): boolean {
-  return order.payment_status === "paid";
+export function isCountablePaidOrder(order: OrderRecord): boolean {
+  return order.payment_status === "paid" && order.status !== "cancelled";
+}
+
+export function isCalendarDateInRange(
+  dateIso: string,
+  range: Pick<DateRangeBounds, "startDate" | "endDate">,
+): boolean {
+  return dateIso >= range.startDate && dateIso <= range.endDate;
 }
 
 function filterPaidOrdersInRange(orders: OrderRecord[], range: DateRangeBounds): OrderRecord[] {
   return orders.filter(
-    (order) => isPaidOrder(order) && isWithinRange(order.placed_at, range),
+    (order) => isCountablePaidOrder(order) && isWithinRange(order.placed_at, range),
   );
 }
 
@@ -85,7 +92,7 @@ export function computeCustomerSegments(input: {
   orders: OrderRecord[];
   range: DateRangeBounds;
 }): { newCustomers: number; returningCustomers: number } {
-  const paidOrders = input.orders.filter(isPaidOrder);
+  const paidOrders = input.orders.filter(isCountablePaidOrder);
   const inRange = paidOrders.filter((order) => isWithinRange(order.placed_at, input.range));
   const seenInRange = new Set<string>();
   let newCustomers = 0;
@@ -107,6 +114,65 @@ export function computeCustomerSegments(input: {
   }
 
   return { newCustomers, returningCustomers };
+}
+
+export function computeReservationMetrics(
+  reservations: ReservationRecord[],
+  range: DateRangeBounds,
+): {
+  reservations: number;
+  reservationCancellations: number;
+  reservationNoShows: number;
+  reservationStarted: number;
+  reservationConversionRate: number;
+} {
+  const bookedForServiceDates = reservations.filter(
+    (reservation) =>
+      reservation.status !== "cancelled" &&
+      isCalendarDateInRange(reservation.reservation_date, range),
+  );
+
+  const reservationCancellations = reservations.filter(
+    (reservation) =>
+      reservation.status === "cancelled" &&
+      reservation.cancelled_at &&
+      isWithinRange(reservation.cancelled_at, range),
+  ).length;
+
+  const reservationNoShows = reservations.filter(
+    (reservation) =>
+      reservation.status === "no_show" &&
+      isCalendarDateInRange(reservation.reservation_date, range),
+  ).length;
+
+  const reservationStarted = reservations.filter((reservation) =>
+    isWithinRange(reservation.created_at, range),
+  ).length;
+
+  const reservationConfirmed = reservations.filter(
+    (reservation) =>
+      reservation.confirmed_at !== null && isWithinRange(reservation.confirmed_at, range),
+  ).length;
+
+  const reservationConversionRate =
+    reservationStarted > 0
+      ? roundMoney((reservationConfirmed / reservationStarted) * 100)
+      : 0;
+
+  return {
+    reservations: bookedForServiceDates.length,
+    reservationCancellations,
+    reservationNoShows,
+    reservationStarted,
+    reservationConversionRate,
+  };
+}
+
+export function countQrScans(
+  qrScans: QrScanRecord[],
+  range: DateRangeBounds,
+): number {
+  return qrScans.filter((scan) => isWithinRange(scan.scanned_at, range)).length;
 }
 
 export function buildAnalyticsReport(input: {
@@ -140,42 +206,15 @@ export function buildAnalyticsReport(input: {
     .sort((a, b) => a.quantity - b.quantity || a.revenue - b.revenue)
     .slice(0, SLOW_MOVING_ITEM_LIMIT);
 
-  const reservationsInRange = input.reservations.filter((reservation) =>
-    isWithinRange(reservation.created_at, input.range),
-  );
-
-  const reservationCancellations = input.reservations.filter(
-    (reservation) =>
-      reservation.status === "cancelled" &&
-      reservation.cancelled_at &&
-      isWithinRange(reservation.cancelled_at, input.range),
-  ).length;
-
-  const reservationNoShows = input.reservations.filter(
-    (reservation) =>
-      reservation.status === "no_show" &&
-      isWithinRange(reservation.updated_at, input.range),
-  ).length;
-
-  const qrScansFromTable = input.qrScans.filter((scan) =>
-    isWithinRange(scan.scanned_at, input.range),
-  ).length;
-
-  const qrScansFromEvents = countEvents(input.events, "QR_SCAN", input.range);
-  const qrScans = qrScansFromTable + qrScansFromEvents;
+  const reservationMetrics = computeReservationMetrics(input.reservations, input.range);
+  const qrScans = countQrScans(input.qrScans, input.range);
 
   const websiteVisitors = countUniqueSessions(input.events, "WEBSITE_VISIT", input.range);
   const menuViews = countEvents(input.events, "MENU_VIEW", input.range);
-  const checkoutStarted = countEvents(input.events, "CHECKOUT_STARTED", input.range);
-  const reservationStarted = countEvents(input.events, "RESERVATION_STARTED", input.range);
-  const reservationCompleted = countEvents(input.events, "RESERVATION_COMPLETED", input.range);
+  const checkoutStarted = countUniqueSessions(input.events, "CHECKOUT_STARTED", input.range);
 
   const orderConversionRate =
     checkoutStarted > 0 ? roundMoney((orderCount / checkoutStarted) * 100) : 0;
-  const reservationConversionRate =
-    reservationStarted > 0
-      ? roundMoney((reservationCompleted / reservationStarted) * 100)
-      : 0;
 
   const { newCustomers, returningCustomers } = computeCustomerSegments({
     orders: input.orders,
@@ -192,15 +231,11 @@ export function buildAnalyticsReport(input: {
     slowMovingItems,
     newCustomers,
     returningCustomers,
-    reservations: reservationsInRange.length,
-    reservationCancellations,
-    reservationNoShows,
+    ...reservationMetrics,
     websiteVisitors,
     menuViews,
     qrScans,
     checkoutStarted,
     orderConversionRate,
-    reservationStarted,
-    reservationConversionRate,
   };
 }

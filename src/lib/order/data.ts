@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { isDemoRestaurantId, ensureDemoStoresSeeded } from "@/lib/restaurant/demo-data";
+import { isDemoRestaurantId, ensureDemoStoresSeeded, getDemoRestaurant } from "@/lib/restaurant/demo-data";
 import { loadPublicMenuForRestaurant } from "@/lib/menu/data";
 import { loadRestaurantBySlug } from "@/lib/restaurant/data";
 import { validateTableSession } from "@/lib/table/data";
@@ -21,10 +21,13 @@ import {
 } from "@/lib/customer/data";
 import {
   notifyOrderReceived,
-  notifyOrderStatusChange,
 } from "@/lib/notification/dispatch";
 import { recordAnalyticsEvent } from "@/lib/analytics/data";
 import { loadRestaurantById } from "@/lib/restaurant/data";
+import {
+  guestContactErrorMessage,
+  parseGuestContact,
+} from "@/lib/validation/guest-contact";
 import type {
   CreateOrderInput,
   OrderRecord,
@@ -68,6 +71,21 @@ export async function createOrder(
     throw new OrderValidationError("Restaurant not found.");
   }
 
+  const contact = parseGuestContact(
+    { email: input.customer.email, phone: input.customer.phone },
+    restaurant.country,
+  );
+  if (!contact.ok) {
+    throw new OrderValidationError(guestContactErrorMessage(contact.errors));
+  }
+
+  const customer = {
+    ...input.customer,
+    email: contact.email,
+    phone: contact.phone,
+  };
+  const orderInput = { ...input, customer };
+
   const menu = await loadPublicMenuForRestaurant(restaurant.id);
   if (!menu) {
     throw new OrderValidationError("No active menu available for ordering.");
@@ -95,7 +113,7 @@ export async function createOrder(
       sessionId: session.session.id,
       tableLabel: session.table_label,
     };
-  } else if (input.orderType === "delivery" && !input.customer.address.trim()) {
+  } else if (input.orderType === "delivery" && !customer.address.trim()) {
     throw new OrderValidationError("Delivery address is required.");
   }
 
@@ -106,7 +124,7 @@ export async function createOrder(
     }
 
     const record = createDemoOrder({
-      ...input,
+      ...orderInput,
       pricedItems: pricedLines,
       totals,
       tableContext,
@@ -114,10 +132,10 @@ export async function createOrder(
     await syncCustomerFromOrder({
       restaurantId: restaurant.id,
       customer: {
-        name: input.customer.name,
-        email: input.customer.email,
-        phone: input.customer.phone,
-        address: input.customer.address || undefined,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address || undefined,
       },
       placedAt: record.placed_at,
     });
@@ -152,8 +170,8 @@ export async function createOrder(
       order_type: input.orderType,
       status: "new",
       payment_status: "pending",
-      customer: input.customer,
-      customer_email: input.customer.email.toLowerCase(),
+      customer: customer,
+      customer_email: customer.email,
       items: pricedLines,
       subtotal: totals.subtotal,
       discount_amount: totals.discountAmount,
@@ -184,12 +202,12 @@ export async function createOrder(
 
   await syncCustomerFromOrder({
     restaurantId: restaurant.id,
-    customer: {
-      name: input.customer.name,
-      email: input.customer.email,
-      phone: input.customer.phone,
-      address: input.customer.address || undefined,
-    },
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address || undefined,
+      },
     placedAt: data.placed_at as string,
   });
 
@@ -201,7 +219,12 @@ export async function createOrder(
 
 export async function listOrdersForRestaurant(
   restaurantId: string,
-  options?: { limit?: number; placedFromUtc?: string; placedBeforeUtc?: string },
+  options?: {
+    limit?: number;
+    offset?: number;
+    placedFromUtc?: string;
+    placedBeforeUtc?: string;
+  },
 ): Promise<OrderRecord[]> {
   if (shouldUseDemoStore(restaurantId)) {
     ensureDemoStoresSeeded();
@@ -216,7 +239,9 @@ export async function listOrdersForRestaurant(
         (order) => new Date(order.placed_at).getTime() < new Date(options.placedBeforeUtc!).getTime(),
       );
     }
-    return orders.slice(0, options?.limit ?? DASHBOARD_ORDERS_LIMIT);
+    const limit = options?.limit ?? DASHBOARD_ORDERS_LIMIT;
+    const offset = options?.offset ?? 0;
+    return orders.slice(offset, offset + limit);
   }
 
   const supabase = await createClient();
@@ -232,7 +257,9 @@ export async function listOrdersForRestaurant(
     query = query.lt("placed_at", options.placedBeforeUtc);
   }
 
-  query = query.order("placed_at", { ascending: false }).limit(options?.limit ?? DASHBOARD_ORDERS_LIMIT);
+  const limit = options?.limit ?? DASHBOARD_ORDERS_LIMIT;
+  const offset = options?.offset ?? 0;
+  query = query.order("placed_at", { ascending: false }).range(offset, offset + limit - 1);
 
   const { data, error } = await query;
 
@@ -285,19 +312,15 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
   cancellationReason?: string,
-): Promise<OrderRecord | null> {
+): Promise<{ record: OrderRecord; placed: PlacedOrder } | null> {
   if (shouldUseDemoStore(restaurantId)) {
     const record = updateDemoOrderStatus(restaurantId, orderId, status, cancellationReason);
-    if (record) {
-      const restaurant = await loadRestaurantById(restaurantId);
-      await notifyOrderStatusChange(
-        record,
-        status,
-        restaurant?.name ?? "Restaurant",
-        cancellationReason,
-      );
-    }
-    return record;
+    if (!record) return null;
+    const demo = getDemoRestaurant();
+    return {
+      record,
+      placed: toPlacedOrder(record, demo.slug, demo.name),
+    };
   }
 
   const supabase = await createClient();
@@ -330,19 +353,29 @@ export async function updateOrderStatus(
     .update(patch)
     .eq("id", orderId)
     .eq("restaurant_id", restaurantId)
-    .select()
+    .select("*, restaurants(slug, name)")
     .single();
 
   if (error) throw error;
-  const record = mapDbRow(data);
-  const restaurant = await loadRestaurantById(restaurantId);
-  await notifyOrderStatusChange(
+  const record = mapDbRow(data as Record<string, unknown>);
+  const restaurant = embeddedRestaurant(data as Record<string, unknown>);
+  return {
     record,
-    status,
-    restaurant?.name ?? "Restaurant",
-    cancellationReason,
-  );
-  return record;
+    placed: toPlacedOrder(record, restaurant.slug, restaurant.name),
+  };
+}
+
+function embeddedRestaurant(row: Record<string, unknown>): { slug: string; name: string } {
+  const raw = row.restaurants as
+    | { slug?: string; name?: string }
+    | { slug?: string; name?: string }[]
+    | null
+    | undefined;
+  const restaurant = Array.isArray(raw) ? raw[0] : raw;
+  return {
+    slug: restaurant?.slug ?? "",
+    name: restaurant?.name ?? "Restaurant",
+  };
 }
 
 function mapDbRow(row: Record<string, unknown>): OrderRecord {

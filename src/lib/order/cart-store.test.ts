@@ -4,6 +4,7 @@ import {
   getCartLinesForMenuItem,
   resetCartItemsSnapshot,
   setCartItemsSnapshot,
+  subscribeCartItems,
 } from "./cart-store";
 
 function line(partial: Partial<CartLineItem> & Pick<CartLineItem, "id" | "menuItemId">): CartLineItem {
@@ -49,5 +50,18 @@ describe("cart-store", () => {
     const after = getCartLinesForMenuItem("item-a");
     expect(after).not.toBe(before);
     expect(after[0]?.quantity).toBe(2);
+  });
+
+  it("does not notify listeners when the snapshot reference is unchanged", () => {
+    const items = [line({ id: "1", menuItemId: "item-a", quantity: 1 })];
+    setCartItemsSnapshot(items);
+
+    let calls = 0;
+    const unsubscribe = subscribeCartItems(() => {
+      calls += 1;
+    });
+    setCartItemsSnapshot(items);
+    unsubscribe();
+    expect(calls).toBe(0);
   });
 });

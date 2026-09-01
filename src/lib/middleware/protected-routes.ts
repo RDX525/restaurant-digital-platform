@@ -73,6 +73,7 @@ export function isPublicPlatformPath(pathname: string): boolean {
     pathname.startsWith("/r/") ||
     pathname.startsWith("/menu/") ||
     pathname.startsWith("/q/") ||
+    pathname.startsWith("/qr/") ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname.startsWith("/auth/")

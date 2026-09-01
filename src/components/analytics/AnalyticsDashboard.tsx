@@ -113,9 +113,10 @@ export function AnalyticsDashboard() {
           <button
             type="button"
             onClick={() => void loadReport()}
+            disabled={loading}
             className="btn-secondary inline-flex items-center gap-2 text-sm"
           >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
             Refresh
           </button>
           <button
@@ -243,9 +244,9 @@ export function AnalyticsDashboard() {
             <section className="platform-card p-5">
               <h3 className="mb-4 font-semibold text-pine-900">Reservations</h3>
               <ul className="space-y-2 text-sm text-pine-700">
-                <li>Total: {report.reservations}</li>
-                <li>Cancellations: {report.reservationCancellations}</li>
-                <li>No-shows: {report.reservationNoShows}</li>
+                <li>Booked for these dates: {report.reservations}</li>
+                <li>Cancelled in this period: {report.reservationCancellations}</li>
+                <li>No-shows for these dates: {report.reservationNoShows}</li>
               </ul>
             </section>
 

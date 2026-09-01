@@ -5,7 +5,7 @@ export default function AnalyticsDashboardPage() {
   return (
     <DashboardShell
       title="Analytics"
-      subtitle="Revenue and funnel reporting from authoritative order data and reliable event tracking."
+      subtitle="Paid sales, covers for the selected dates, and QR scans from the database — not estimated event totals."
     >
       <AnalyticsDashboard />
     </DashboardShell>

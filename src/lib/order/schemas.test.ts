@@ -28,7 +28,32 @@ describe("order schemas", () => {
     });
 
     expect(parsed.items[0]!.quantity).toBe(2);
+    expect(parsed.customer.email).toBe("alex@example.com");
     expect(parsed).not.toHaveProperty("totals");
+  });
+
+  it("rejects invalid guest email on create order", () => {
+    expect(() =>
+      createOrderSchema.parse({
+        idempotencyKey: "idem-12345678",
+        restaurantSlug: "demo-restaurant",
+        items: [
+          {
+            menuItemId: "00000000-0000-4000-8000-000000000401",
+            quantity: 1,
+            modifierIds: [],
+          },
+        ],
+        customer: {
+          name: "Alex",
+          email: "not-an-email",
+          phone: "+64 21 000 0000",
+          orderType: "pickup",
+          address: "",
+          notes: "",
+        },
+      }),
+    ).toThrow();
   });
 
   it("rejects create order payload missing idempotency key", () => {
@@ -43,7 +68,7 @@ describe("order schemas", () => {
 
   it("validates order history query", () => {
     const parsed = orderHistoryQuerySchema.parse({
-      email: "guest@example.com",
+      email: "Guest@Example.com",
       restaurantSlug: "demo-restaurant",
     });
     expect(parsed.email).toBe("guest@example.com");

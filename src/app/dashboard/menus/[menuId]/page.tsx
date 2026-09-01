@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { DashboardShell } from "@/components/platform/DashboardShell";
 import { MenuEditor } from "@/components/menu/MenuEditor";
+import { resolveRestaurantIdForMenu } from "@/lib/menu/authorization";
+import { publicRestaurantMenuPath } from "@/lib/cache/public-site";
+import { loadRestaurantById } from "@/lib/restaurant/data";
 
 type PageProps = {
   params: Promise<{ menuId: string }>;
@@ -9,6 +12,11 @@ type PageProps = {
 
 export default async function MenuEditorPage({ params }: PageProps) {
   const { menuId } = await params;
+  const restaurantId = await resolveRestaurantIdForMenu(menuId);
+  const restaurant = await loadRestaurantById(restaurantId, { galleryLimit: 0 });
+  const liveHref = restaurant
+    ? publicRestaurantMenuPath(restaurant.slug)
+    : `/menu/${menuId}`;
 
   return (
     <DashboardShell
@@ -16,7 +24,7 @@ export default async function MenuEditorPage({ params }: PageProps) {
       backLabel="All menus"
       action={
         <Link
-          href={`/menu/${menuId}`}
+          href={liveHref}
           target="_blank"
           className="btn-secondary"
         >

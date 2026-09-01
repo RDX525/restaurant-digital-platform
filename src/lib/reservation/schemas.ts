@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { guestEmailSchema, guestPhoneInputSchema } from "@/lib/validation/guest-contact";
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 export const createReservationSchema = z.object({
-  guestName: z.string().min(1).max(120),
-  guestEmail: z.string().email(),
-  guestPhone: z.string().min(1).max(40),
+  guestName: z.string().trim().min(1).max(120),
+  guestEmail: guestEmailSchema,
+  guestPhone: guestPhoneInputSchema,
   guestCount: z.number().int().positive().max(100),
   date: z.string().regex(dateRegex, "Invalid date format"),
   time: z.string().regex(timeRegex, "Invalid time format"),

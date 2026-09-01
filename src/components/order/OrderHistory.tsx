@@ -6,6 +6,7 @@ import { History, Search } from "lucide-react";
 import type { PlacedOrder } from "@/lib/order/types";
 import { STATUS_LABELS } from "@/lib/order/constants";
 import { formatPrice, getErrorMessage } from "@/lib/utils";
+import { guestEmailSchema } from "@/lib/validation/guest-contact";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { useRestaurantNav } from "@/hooks/useRestaurantNav";
 
@@ -34,12 +35,17 @@ export function OrderHistory({ restaurant }: OrderHistoryProps) {
     setSearched(true);
 
     try {
+      const parsedEmail = guestEmailSchema.safeParse(email);
+      if (!parsedEmail.success) {
+        throw new Error(parsedEmail.error.issues[0]?.message ?? "Enter a valid email address");
+      }
+
       const params = new URLSearchParams({
-        email: email.trim(),
+        email: parsedEmail.data,
         restaurantSlug: restaurant.slug,
       });
       const storedToken = window.sessionStorage.getItem(
-        `kati-order-history-token:${restaurant.slug}:${email.trim().toLowerCase()}`,
+        `kati-order-history-token:${restaurant.slug}:${parsedEmail.data}`,
       );
       if (storedToken) {
         params.set("accessToken", storedToken);

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEFAULT_TIMEZONE } from "@/lib/reservation/constants";
+import { DEFAULT_DINING_LOCATION_NAME } from "@/lib/table/constants";
 
 export function slugifyRestaurantName(name: string): string {
   const base = name
@@ -124,6 +125,14 @@ export async function provisionRestaurantForUser(
     booking_min_notice_hours: 2,
     slot_interval_minutes: 30,
     max_covers_per_slot: 24,
+    created_at: now,
+    updated_at: now,
+  });
+
+  await admin.from("restaurant_locations").insert({
+    restaurant_id: restaurantId,
+    name: DEFAULT_DINING_LOCATION_NAME,
+    is_active: true,
     created_at: now,
     updated_at: now,
   });

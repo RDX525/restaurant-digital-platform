@@ -9,6 +9,17 @@ export const menuSchema = z.object({
   sort_order: z.number().int().min(0).default(0),
 });
 
+export const menuPatchSchema = z
+  .object({
+    name: z.string().trim().min(1, "Menu name is required").max(120).optional(),
+    description: z.string().trim().max(500).optional().nullable(),
+    is_active: z.boolean().optional(),
+    sort_order: z.number().int().min(0).optional(),
+  })
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    message: "At least one menu field is required",
+  });
+
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required").max(120),
   sort_order: z.number().int().min(0).default(0),

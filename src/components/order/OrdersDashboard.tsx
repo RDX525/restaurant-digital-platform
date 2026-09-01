@@ -63,11 +63,14 @@ export function OrdersDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const ordersRequestRef = useRef<AbortController | null>(null);
+  const busyIdRef = useRef<string | null>(null);
 
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async (options?: { force?: boolean }) => {
     if (!restaurantId) return;
+    if (!options?.force && busyIdRef.current) return;
     ordersRequestRef.current?.abort();
     const controller = new AbortController();
     ordersRequestRef.current = controller;
@@ -100,6 +103,7 @@ export function OrdersDashboard() {
   async function refundOrder(order: PlacedOrder) {
     if (!confirm(`Refund ${order.orderNumber}?`)) return;
     setBusyId(order.id);
+    busyIdRef.current = order.id;
     try {
       const response = await fetch(
         `/api/restaurants/${restaurantId}/orders/${order.id}/refund`,
@@ -111,6 +115,7 @@ export function OrdersDashboard() {
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
+      busyIdRef.current = null;
       setBusyId(null);
     }
   }
@@ -126,6 +131,11 @@ export function OrdersDashboard() {
     }
 
     setBusyId(order.id);
+    busyIdRef.current = order.id;
+    const previous = orders;
+    setOrders((current) =>
+      current.map((entry) => (entry.id === order.id ? { ...entry, status } : entry)),
+    );
     try {
       const response = await fetch(
         `/api/restaurants/${restaurantId}/orders/${order.id}`,
@@ -137,10 +147,15 @@ export function OrdersDashboard() {
       );
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to update order");
-      await loadOrders();
+      setOrders((current) =>
+        current.map((entry) => (entry.id === order.id ? (payload as PlacedOrder) : entry)),
+      );
+      setError(null);
     } catch (err) {
+      setOrders(previous);
       setError(getErrorMessage(err));
     } finally {
+      busyIdRef.current = null;
       setBusyId(null);
     }
   }
@@ -196,8 +211,22 @@ export function OrdersDashboard() {
           <p className="eyebrow">Live orders</p>
           <h2 className="mt-1 font-display text-2xl text-pine-900">Order queue</h2>
         </div>
-        <button type="button" className="btn-secondary" onClick={() => void loadOrders()}>
-          <RefreshCw className="h-4 w-4" />
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={refreshing}
+          onClick={() => {
+            void (async () => {
+              setRefreshing(true);
+              try {
+                await loadOrders({ force: true });
+              } finally {
+                setRefreshing(false);
+              }
+            })();
+          }}
+        >
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
           Refresh
         </button>
       </div>

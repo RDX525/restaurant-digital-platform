@@ -19,23 +19,30 @@ export async function GET(request: Request, { params }: Params) {
   const origin = new URL(request.url).origin;
 
   if (!token || (!isValidQrTokenFormat(token) && !isLegacyDemoToken(token))) {
-    return NextResponse.redirect(new URL("/?error=invalid-qr", origin));
+    return NextResponse.redirect(new URL("/qr/invalid", origin));
   }
 
   const resolved = await resolveQrToken(token);
-  if (!resolved || !resolved.is_published) {
-    return NextResponse.redirect(new URL("/?error=invalid-qr", origin));
+  if (!resolved) {
+    return NextResponse.redirect(new URL("/qr/invalid", origin));
   }
 
   const headerStore = await headers();
-  await recordQrScan(resolved, {
-    userAgent: headerStore.get("user-agent"),
-    referrer: headerStore.get("referer"),
-  });
+  try {
+    await recordQrScan(resolved, {
+      userAgent: headerStore.get("user-agent"),
+      referrer: headerStore.get("referer"),
+    });
+  } catch {
+    // Scan analytics must not block the guest from reaching the menu.
+  }
 
   const session = await createTableSession(resolved);
   const menuUrl = new URL(`/r/${resolved.restaurant_slug}/menu`, origin);
   menuUrl.searchParams.set("table", resolved.table.label);
+  if (!resolved.is_published) {
+    menuUrl.searchParams.set("preview", "1");
+  }
 
   const response = NextResponse.redirect(menuUrl);
   response.cookies.set(TABLE_SESSION_COOKIE, session.session_token, {

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Plus, ChevronRight, UtensilsCrossed, Sparkles } from "lucide-react";
-import { createMenu } from "@/lib/menu/client-api";
+import { createMenu, saveMenu } from "@/lib/menu/client-api";
+import { exclusiveMenuActiveStates } from "@/lib/menu/exclusive-active";
 import type { Menu } from "@/lib/menu/types";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -12,13 +13,16 @@ export function MenusDashboard() {
   const router = useRouter();
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadMenus() {
-    setLoading(true);
+  async function loadMenus(options?: { silent?: boolean }) {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
-      const response = await fetch("/api/menus");
+      const response = await fetch("/api/menus", { cache: "no-store" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to load menus");
       setMenus(payload);
@@ -31,6 +35,17 @@ export function MenusDashboard() {
 
   useEffect(() => {
     void loadMenus();
+
+    function refreshOnReturn() {
+      void loadMenus({ silent: true });
+    }
+
+    window.addEventListener("focus", refreshOnReturn);
+    document.addEventListener("visibilitychange", refreshOnReturn);
+    return () => {
+      window.removeEventListener("focus", refreshOnReturn);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
+    };
   }, []);
 
   async function handleCreateMenu() {
@@ -48,6 +63,30 @@ export function MenusDashboard() {
       router.refresh();
     } catch (err) {
       setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleToggleActive(menu: Menu) {
+    const nextActive = !menu.is_active;
+    const previous = menus;
+    setBusyId(menu.id);
+    setError(null);
+    setMenus((current) => {
+      const nextStates = exclusiveMenuActiveStates(current, menu.id, nextActive);
+      return current.map((entry) => {
+        const state = nextStates.find((item) => item.id === entry.id);
+        return state ? { ...entry, is_active: state.is_active } : entry;
+      });
+    });
+
+    try {
+      await saveMenu(menu.id, { is_active: nextActive });
+      await loadMenus({ silent: true });
+    } catch (err) {
+      setMenus(previous);
+      setError(getErrorMessage(err));
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -92,41 +131,58 @@ export function MenusDashboard() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
           {menus.map((menu) => (
-            <Link
-              key={menu.id}
-              href={`/dashboard/menus/${menu.id}`}
-              className="card-interactive group block p-6"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pine-50 to-cream-100 text-pine-700 ring-1 ring-pine-900/5">
-                    <UtensilsCrossed className="h-5 w-5" aria-hidden="true" />
+            <div key={menu.id} className="card-interactive group p-6">
+              <Link href={`/dashboard/menus/${menu.id}`} className="block">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pine-50 to-cream-100 text-pine-700 ring-1 ring-pine-900/5">
+                      <UtensilsCrossed className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-xl text-pine-900 transition group-hover:text-pine-700">
+                        {menu.name}
+                      </h2>
+                      {menu.description ? (
+                        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-pine-500">
+                          {menu.description}
+                        </p>
+                      ) : (
+                        <p className="mt-1.5 text-sm text-pine-400">No description yet</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-display text-xl text-pine-900 transition group-hover:text-pine-700">
-                      {menu.name}
-                    </h2>
-                    {menu.description ? (
-                      <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-pine-500">
-                        {menu.description}
-                      </p>
-                    ) : (
-                      <p className="mt-1.5 text-sm text-pine-400">No description yet</p>
-                    )}
-                  </div>
+                  <ChevronRight
+                    className="h-5 w-5 shrink-0 text-pine-300 transition group-hover:translate-x-0.5 group-hover:text-gold-600"
+                    aria-hidden="true"
+                  />
                 </div>
-                <ChevronRight
-                  className="h-5 w-5 shrink-0 text-pine-300 transition group-hover:translate-x-0.5 group-hover:text-gold-600"
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="mt-5 flex items-center justify-between border-t border-pine-900/5 pt-4">
+              </Link>
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-pine-900/5 pt-4">
                 <span className={menu.is_active ? "badge-live" : "badge-muted"}>
                   {menu.is_active ? "Live" : "Draft"}
                 </span>
-                <span className="text-xs font-medium text-pine-400">Open editor</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    className={menu.is_active ? "btn-secondary" : "btn-primary"}
+                    disabled={busyId === menu.id}
+                    onClick={() => void handleToggleActive(menu)}
+                  >
+                    {busyId === menu.id
+                      ? "Updating…"
+                      : menu.is_active
+                        ? "Deactivate"
+                        : "Activate"}
+                  </button>
+                  <Link
+                    href={`/dashboard/menus/${menu.id}`}
+                    className="text-xs font-medium text-pine-400 hover:text-pine-700"
+                  >
+                    Open editor
+                  </Link>
+                </div>
               </div>
-            </Link>
+            </div>
           ))}
           {menus.length === 0 ? (
             <div className="empty-state md:col-span-2">

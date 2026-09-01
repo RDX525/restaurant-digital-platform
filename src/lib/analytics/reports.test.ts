@@ -122,6 +122,13 @@ describe("analytics reports", () => {
           customer_email: "pending@example.com",
         }),
         makeOrder({
+          id: "cancelled-paid",
+          total: 80,
+          payment_status: "paid",
+          status: "cancelled",
+          customer_email: "cancel@example.com",
+        }),
+        makeOrder({
           id: "paid-2",
           total: 18,
           payment_status: "paid",
@@ -229,11 +236,9 @@ describe("analytics reports", () => {
         makeEvent({ event_type: "WEBSITE_VISIT", session_id: "visit-a" }),
         makeEvent({ event_type: "WEBSITE_VISIT", session_id: "visit-b" }),
         makeEvent({ event_type: "MENU_VIEW" }),
-        makeEvent({ event_type: "CHECKOUT_STARTED" }),
-        makeEvent({ event_type: "CHECKOUT_STARTED" }),
-        makeEvent({ event_type: "RESERVATION_STARTED" }),
-        makeEvent({ event_type: "RESERVATION_STARTED" }),
-        makeEvent({ event_type: "RESERVATION_COMPLETED" }),
+        makeEvent({ event_type: "CHECKOUT_STARTED", session_id: "checkout-a" }),
+        makeEvent({ event_type: "CHECKOUT_STARTED", session_id: "checkout-b" }),
+        makeEvent({ event_type: "QR_SCAN" }),
       ],
       qrScans: [
         {
@@ -250,10 +255,68 @@ describe("analytics reports", () => {
     expect(report.qrScans).toBe(1);
     expect(report.checkoutStarted).toBe(2);
     expect(report.orderConversionRate).toBe(50);
-    expect(report.reservationStarted).toBe(2);
-    expect(report.reservationConversionRate).toBe(50);
-    expect(report.reservations).toBe(3);
-    expect(report.reservationCancellations).toBe(1);
+  });
+
+  it("counts QR scans from the scan table only", () => {
+    const report = buildAnalyticsReport({
+      orders: [],
+      reservations: [],
+      events: [
+        makeEvent({ event_type: "QR_SCAN" }),
+        makeEvent({ event_type: "QR_SCAN", id: crypto.randomUUID() }),
+      ],
+      qrScans: [
+        {
+          restaurant_id: RESTAURANT_ID,
+          table_id: "table-1",
+          scanned_at: "2026-08-25T08:30:00.000Z",
+        },
+      ],
+      range,
+    });
+
+    expect(report.qrScans).toBe(1);
+  });
+
+  it("counts reservations by service date and cancellations by when they were cancelled", () => {
+    const report = buildAnalyticsReport({
+      orders: [],
+      reservations: [
+        makeReservation({
+          id: "tonight",
+          reservation_date: "2026-08-25",
+          status: "confirmed",
+          confirmed_at: "2026-08-25T01:00:00.000Z",
+        }),
+        makeReservation({
+          id: "no-show-tonight",
+          reservation_date: "2026-08-25",
+          status: "no_show",
+          updated_at: "2026-08-25T10:00:00.000Z",
+        }),
+        makeReservation({
+          id: "tomorrow-booking",
+          reservation_date: "2026-08-26",
+          status: "confirmed",
+          confirmed_at: "2026-08-25T03:00:00.000Z",
+        }),
+        makeReservation({
+          id: "old-booking-cancelled-today",
+          reservation_date: "2026-09-10",
+          status: "cancelled",
+          created_at: "2026-07-01T09:00:00.000Z",
+          cancelled_at: "2026-08-25T06:00:00.000Z",
+        }),
+      ],
+      events: [],
+      qrScans: [],
+      range,
+    });
+
+    expect(report.reservations).toBe(2);
     expect(report.reservationNoShows).toBe(1);
+    expect(report.reservationCancellations).toBe(1);
+    expect(report.reservationStarted).toBe(3);
+    expect(report.reservationConversionRate).toBe(66.67);
   });
 });

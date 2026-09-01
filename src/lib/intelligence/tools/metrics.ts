@@ -1,6 +1,6 @@
 import type { DateRangePreset } from "@/lib/analytics/constants";
 import { resolveDateRange } from "@/lib/analytics/date-range";
-import { buildAnalyticsReport } from "@/lib/analytics/reports";
+import { buildAnalyticsReport, isCountablePaidOrder } from "@/lib/analytics/reports";
 import type { OrderRecord } from "@/lib/order/types";
 import type { ReservationRecord } from "@/lib/reservation/types";
 import type { CustomerProfile } from "@/lib/customer/types";
@@ -25,7 +25,7 @@ export function roundPercent(value: number): number {
 }
 
 export function isPaidOrder(order: OrderRecord): boolean {
-  return order.payment_status === "paid";
+  return isCountablePaidOrder(order);
 }
 
 export function filterPaidOrders(orders: OrderRecord[]): OrderRecord[] {

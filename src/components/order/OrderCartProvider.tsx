@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -63,25 +64,26 @@ export function OrderCartProvider({
   children: React.ReactNode;
 }) {
   const [items, setItems] = useState<CartLineItem[]>([]);
+  const itemsRef = useRef<CartLineItem[]>([]);
 
   useEffect(() => {
     const next = loadInitialItems(restaurantSlug);
+    itemsRef.current = next;
     setItems(next);
     setCartItemsSnapshot(next);
   }, [restaurantSlug]);
 
   const persist = useCallback(
     (updater: CartLineItem[] | ((current: CartLineItem[]) => CartLineItem[])) => {
-      setItems((current) => {
-        const nextItems = typeof updater === "function" ? updater(current) : updater;
-        writeCart({
-          restaurantSlug,
-          items: nextItems,
-          updatedAt: new Date().toISOString(),
-        });
-        setCartItemsSnapshot(nextItems);
-        return nextItems;
+      const nextItems = typeof updater === "function" ? updater(itemsRef.current) : updater;
+      itemsRef.current = nextItems;
+      writeCart({
+        restaurantSlug,
+        items: nextItems,
+        updatedAt: new Date().toISOString(),
       });
+      setItems(nextItems);
+      setCartItemsSnapshot(nextItems);
     },
     [restaurantSlug],
   );
@@ -129,6 +131,7 @@ export function OrderCartProvider({
   );
 
   const clearAll = useCallback(() => {
+    itemsRef.current = [];
     clearCart(restaurantSlug);
     setItems([]);
     setCartItemsSnapshot([]);

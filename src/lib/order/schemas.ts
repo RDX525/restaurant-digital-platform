@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { guestEmailSchema, guestPhoneInputSchema } from "@/lib/validation/guest-contact";
 
 export const orderLineInputSchema = z.object({
   menuItemId: z.string().uuid(),
@@ -12,9 +13,9 @@ export const createOrderSchema = z.object({
   restaurantSlug: z.string().min(1),
   items: z.array(orderLineInputSchema).min(1).max(50),
   customer: z.object({
-    name: z.string().min(1).max(120),
-    email: z.string().email(),
-    phone: z.string().min(1).max(40),
+    name: z.string().trim().min(1).max(120),
+    email: guestEmailSchema,
+    phone: guestPhoneInputSchema,
     orderType: z.enum(["pickup", "delivery", "dine_in"]),
     address: z.string().max(500),
     notes: z.string().max(500),
@@ -31,7 +32,7 @@ export const updateOrderStatusSchema = z.object({
 });
 
 export const orderHistoryQuerySchema = z.object({
-  email: z.string().email(),
+  email: guestEmailSchema,
   restaurantSlug: z.string().min(1).optional(),
   accessToken: z.string().min(1).optional(),
 });

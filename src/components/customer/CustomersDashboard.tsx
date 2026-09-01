@@ -39,6 +39,7 @@ export function CustomersDashboard() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const customersRequestRef = useRef<AbortController | null>(null);
 
   const loadCustomers = useCallback(async (search?: string) => {
@@ -153,10 +154,21 @@ export function CustomersDashboard() {
         </div>
         <button
           type="button"
-          onClick={() => void loadCustomers(query)}
+          onClick={() => {
+            void (async () => {
+              setRefreshing(true);
+              try {
+                await loadCustomers(query);
+                if (selectedId) await loadDetail(selectedId);
+              } finally {
+                setRefreshing(false);
+              }
+            })();
+          }}
+          disabled={refreshing}
           className="btn-secondary inline-flex items-center gap-2 text-sm"
         >
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} aria-hidden="true" />
           Refresh
         </button>
       </div>

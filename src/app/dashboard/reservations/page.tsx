@@ -5,7 +5,7 @@ export default function ReservationsDashboardPage() {
   return (
     <DashboardShell
       title="Reservations"
-      subtitle="Review booking requests, manage your calendar, and confirm guest arrivals."
+      subtitle="Review booking requests, confirm arrivals, and look up completed or cancelled reservations."
     >
       <ReservationsDashboard />
     </DashboardShell>

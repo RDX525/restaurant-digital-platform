@@ -2,10 +2,11 @@ import { getActiveTableToken } from "@/lib/table/data";
 import { generateQrCodePng } from "@/lib/table/qr-image";
 import { jsonError } from "@/lib/api";
 import { guardRestaurantRoute } from "@/lib/auth/guards";
+import { resolveQrSiteUrl } from "@/lib/env/site-url";
 
 type Params = { params: Promise<{ id: string; tableId: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   try {
     const { id, tableId } = await params;
     await guardRestaurantRoute(id);
@@ -14,7 +15,10 @@ export async function GET(_request: Request, { params }: Params) {
       return jsonError(new Error("No active QR token for table"), 404);
     }
 
-    const png = await generateQrCodePng(token.token);
+    const png = await generateQrCodePng(
+      token.token,
+      resolveQrSiteUrl(new URL(request.url).origin),
+    );
     return new Response(new Uint8Array(png), {
       status: 200,
       headers: {

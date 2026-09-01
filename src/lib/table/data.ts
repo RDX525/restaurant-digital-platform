@@ -1,15 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getDemoRestaurantId } from "@/lib/utils";
 import { isDemoRestaurantId } from "@/lib/restaurant/demo-data";
+import { DEFAULT_DINING_LOCATION_NAME } from "./constants";
 import { generateQrTokenValue, generateSessionTokenValue } from "./tokens";
 import { getTableSessionExpiry, isSessionExpired } from "./session";
 import {
   assertDemoRestaurantOwnership,
   createDemoTable,
   createDemoTableSession,
-  getDemoDefaultLocationId,
   getDemoTableToken,
   listDemoTablesWithStats,
   recordDemoScan,
@@ -145,7 +144,7 @@ export async function createTable(
   }
 
   const supabase = await createClient();
-  const resolvedLocationId = locationId ?? (await getDefaultLocationId(restaurantId));
+  const resolvedLocationId = locationId ?? (await ensureDefaultLocationId(restaurantId));
 
   const { data: table, error } = await supabase
     .from("restaurant_tables")
@@ -354,7 +353,7 @@ export async function createTableSession(resolved: ResolvedQrToken) {
     return createDemoTableSession(resolved);
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("table_sessions")
     .insert({
@@ -437,11 +436,7 @@ export async function validateTableSession(
   };
 }
 
-async function getDefaultLocationId(restaurantId: string): Promise<string> {
-  if (restaurantId === getDemoRestaurantId()) {
-    return getDemoDefaultLocationId();
-  }
-
+export async function ensureDefaultLocationId(restaurantId: string): Promise<string> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("restaurant_locations")
@@ -453,9 +448,25 @@ async function getDefaultLocationId(restaurantId: string): Promise<string> {
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) {
-    throw new Error("No active location found for restaurant");
+  if (data?.id) return data.id;
+
+  const now = new Date().toISOString();
+  const { data: created, error: createError } = await supabase
+    .from("restaurant_locations")
+    .insert({
+      restaurant_id: restaurantId,
+      name: DEFAULT_DINING_LOCATION_NAME,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("id")
+    .single();
+
+  if (createError) throw createError;
+  if (!created?.id) {
+    throw new Error("Could not create a dining location for this restaurant.");
   }
 
-  return data.id;
+  return created.id;
 }

@@ -15,6 +15,7 @@ import {
   fetchPublishedRestaurants,
 } from "@/lib/restaurant/service";
 import type { PublicRestaurant, Restaurant } from "@/lib/restaurant/types";
+import { PUBLIC_RESTAURANT_CACHE_TAG } from "@/lib/cache/public-site";
 
 type SlugOptions = { includeUnpublished?: boolean; galleryLimit?: number };
 
@@ -81,7 +82,7 @@ const getCachedPublishedRestaurant =
         async (slug: string) =>
           loadRestaurantBySlugImpl(slug, { includeUnpublished: false, galleryLimit: 0 }),
         ["public-restaurant-by-slug"],
-        { revalidate: 60 },
+        { revalidate: 60, tags: [PUBLIC_RESTAURANT_CACHE_TAG] },
       );
 
 const getCachedRestaurantGallery =
@@ -89,6 +90,7 @@ const getCachedRestaurantGallery =
     ? loadRestaurantGalleryUncached
     : unstable_cache(loadRestaurantGalleryUncached, ["public-restaurant-gallery"], {
         revalidate: 60,
+        tags: [PUBLIC_RESTAURANT_CACHE_TAG],
       });
 
 async function loadRestaurantGalleryUncached(restaurantId: string, limit: number) {

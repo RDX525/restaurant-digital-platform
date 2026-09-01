@@ -14,6 +14,7 @@ import {
   addDaysToDateIso,
 } from "@/lib/reservation/timezone";
 import { ANALYTICS_ORDERS_LOOKBACK_DAYS } from "@/lib/constants/pagination";
+import { SUPABASE_PAGE_SIZE, fetchAllQueryRows } from "@/lib/supabase/paginate";
 import {
   listDemoAnalyticsEventsForRestaurant,
   recordDemoAnalyticsEvent,
@@ -67,18 +68,31 @@ async function loadOrders(
       : [];
   }
 
-  if (!range) {
-    return listOrdersForRestaurant(restaurantId, { limit: 10_000 });
+  const lookbackUtc = range
+    ? resolveDateRange(
+        "custom",
+        range.timezone,
+        addDaysToDateIso(range.startDate, -ANALYTICS_ORDERS_LOOKBACK_DAYS),
+        range.endDate,
+      ).startUtc
+    : undefined;
+
+  const orders: OrderRecord[] = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await listOrdersForRestaurant(restaurantId, {
+      placedFromUtc: lookbackUtc,
+      placedBeforeUtc: range?.endUtc,
+      limit: SUPABASE_PAGE_SIZE,
+      offset,
+    });
+    orders.push(...page);
+    if (page.length < SUPABASE_PAGE_SIZE) break;
+    offset += SUPABASE_PAGE_SIZE;
   }
 
-  const lookbackStart = addDaysToDateIso(range.startDate, -ANALYTICS_ORDERS_LOOKBACK_DAYS);
-  const lookbackUtc = resolveDateRange("custom", range.timezone, lookbackStart, range.endDate).startUtc;
-
-  return listOrdersForRestaurant(restaurantId, {
-    placedFromUtc: lookbackUtc,
-    placedBeforeUtc: range.endUtc,
-    limit: 10_000,
-  });
+  return orders;
 }
 
 async function loadReservations(
@@ -92,18 +106,69 @@ async function loadReservations(
   }
 
   const supabase = await createClient();
-  let query = supabase.from("reservations").select("*").eq("restaurant_id", restaurantId);
 
-  if (range) {
-    query = query
-      .gte("created_at", range.startUtc)
-      .lt("created_at", range.endUtc);
+  if (!range) {
+    const rows = await fetchAllQueryRows<Record<string, unknown>>((from, to) =>
+      supabase
+        .from("reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    );
+    return rows.map((row) => mapReservationRowFromDb(row, restaurantId));
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
+  const [byServiceDate, byCreated, byCancelled, byConfirmed] = await Promise.all([
+    fetchAllQueryRows<Record<string, unknown>>((from, to) =>
+      supabase
+        .from("reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .gte("reservation_date", range.startDate)
+        .lte("reservation_date", range.endDate)
+        .order("reservation_date", { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllQueryRows<Record<string, unknown>>((from, to) =>
+      supabase
+        .from("reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .gte("created_at", range.startUtc)
+        .lt("created_at", range.endUtc)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllQueryRows<Record<string, unknown>>((from, to) =>
+      supabase
+        .from("reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .gte("cancelled_at", range.startUtc)
+        .lt("cancelled_at", range.endUtc)
+        .order("cancelled_at", { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllQueryRows<Record<string, unknown>>((from, to) =>
+      supabase
+        .from("reservations")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .gte("confirmed_at", range.startUtc)
+        .lt("confirmed_at", range.endUtc)
+        .order("confirmed_at", { ascending: false })
+        .range(from, to),
+    ),
+  ]);
 
-  return (data ?? []).map((row) => mapReservationRowFromDb(row, restaurantId));
+  const byId = new Map<string, ReservationRecord>();
+  for (const row of [...byServiceDate, ...byCreated, ...byCancelled, ...byConfirmed]) {
+    const record = mapReservationRowFromDb(row, restaurantId);
+    byId.set(record.id, record);
+  }
+
+  return Array.from(byId.values());
 }
 
 function mapReservationRowFromDb(
@@ -145,19 +210,20 @@ async function loadEvents(
   }
 
   const supabase = await createClient();
-  let query = supabase
-    .from("analytics_events")
-    .select("*")
-    .eq("restaurant_id", restaurantId);
+  const rows = await fetchAllQueryRows<Record<string, unknown>>((from, to) => {
+    let query = supabase
+      .from("analytics_events")
+      .select("*")
+      .eq("restaurant_id", restaurantId);
 
-  if (range) {
-    query = query.gte("occurred_at", range.startUtc).lt("occurred_at", range.endUtc);
-  }
+    if (range) {
+      query = query.gte("occurred_at", range.startUtc).lt("occurred_at", range.endUtc);
+    }
 
-  const { data, error } = await query.order("occurred_at", { ascending: false });
+    return query.order("occurred_at", { ascending: false }).range(from, to);
+  });
 
-  if (error) throw error;
-  return (data ?? []).map(mapEventRow);
+  return rows.map(mapEventRow);
 }
 
 async function loadQrScans(
@@ -170,19 +236,18 @@ async function loadQrScans(
   }
 
   const supabase = await createClient();
-  let query = supabase
-    .from("qr_scan_events")
-    .select("restaurant_id, table_id, scanned_at")
-    .eq("restaurant_id", restaurantId);
+  return fetchAllQueryRows<QrScanRecord>((from, to) => {
+    let query = supabase
+      .from("qr_scan_events")
+      .select("restaurant_id, table_id, scanned_at")
+      .eq("restaurant_id", restaurantId);
 
-  if (range) {
-    query = query.gte("scanned_at", range.startUtc).lt("scanned_at", range.endUtc);
-  }
+    if (range) {
+      query = query.gte("scanned_at", range.startUtc).lt("scanned_at", range.endUtc);
+    }
 
-  const { data, error } = await query;
-
-  if (error) throw error;
-  return (data ?? []) as QrScanRecord[];
+    return query.order("scanned_at", { ascending: false }).range(from, to);
+  });
 }
 
 export async function recordAnalyticsEvent(

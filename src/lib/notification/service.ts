@@ -151,15 +151,11 @@ export async function sendTransactionalNotification(
     input.notificationType,
   );
 
-  const results: NotificationLogRecord[] = [];
-
-  for (const channel of channels) {
-    if (channel === "sms" && !input.recipientPhone?.trim()) {
-      continue;
-    }
-
-    results.push(await sendOnChannel(input, channel));
-  }
+  const results = await Promise.all(
+    channels
+      .filter((channel) => !(channel === "sms" && !input.recipientPhone?.trim()))
+      .map((channel) => sendOnChannel(input, channel)),
+  );
 
   return results;
 }

@@ -5,8 +5,11 @@ import { isDemoRestaurantId } from "@/lib/restaurant/demo-data";
 import { restaurantWebsiteSchema } from "@/lib/restaurant/schemas";
 import { jsonError, jsonOk } from "@/lib/api";
 import { guardRestaurantRoute } from "@/lib/auth/guards";
+import { revalidatePublicRestaurantSite } from "@/lib/cache/revalidate-public-site";
 
 type Params = { params: Promise<{ id: string }> };
+
+export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: Params) {
   try {
@@ -29,6 +32,8 @@ export async function PATCH(request: Request, { params }: Params) {
     await guardRestaurantRoute(id);
     const body = await request.json();
     const parsed = restaurantWebsiteSchema.partial().parse(body);
+    delete parsed.logo_url;
+    delete parsed.hero_image_url;
 
     if (!isSupabaseConfigured()) {
       if (!isDemoRestaurantId(id)) {
@@ -46,10 +51,13 @@ export async function PATCH(request: Request, { params }: Params) {
       return jsonOk({
         ...restaurant,
         ...parsed,
+        logo_url: restaurant.logo_url,
+        hero_image_url: restaurant.hero_image_url,
         updated_at: new Date().toISOString(),
       });
     }
 
+    const existing = await loadRestaurantById(id, { galleryLimit: 0 });
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -57,12 +65,6 @@ export async function PATCH(request: Request, { params }: Params) {
       .update({
         ...parsed,
         email: parsed.email === undefined ? undefined : parsed.email || null,
-        logo_url:
-          parsed.logo_url === undefined ? undefined : parsed.logo_url || null,
-        hero_image_url:
-          parsed.hero_image_url === undefined
-            ? undefined
-            : parsed.hero_image_url || null,
         google_maps_url:
           parsed.google_maps_url === undefined
             ? undefined
@@ -81,6 +83,11 @@ export async function PATCH(request: Request, { params }: Params) {
     if (!restaurant) {
       return jsonError(new Error("Restaurant not found"), 404);
     }
+
+    revalidatePublicRestaurantSite({
+      slug: restaurant.slug,
+      previousSlug: existing?.slug,
+    });
 
     return jsonOk(restaurant);
   } catch (error) {

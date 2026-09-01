@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { jsonError, jsonOk } from "@/lib/api";
+import { guardRestaurantRoute } from "@/lib/auth/guards";
+import { resolveRestaurantIdForMenuItem } from "@/lib/menu/authorization";
+import { menuImageObjectPath } from "@/lib/menu/storage";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const BUCKET = "menu-images";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -7,6 +11,13 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseConfigured()) {
+      return jsonError(
+        new Error("Configure Supabase in .env.local to upload images."),
+        503,
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const itemId = formData.get("itemId");
@@ -27,8 +38,11 @@ export async function POST(request: Request) {
       return jsonError(new Error("Image must be 5MB or smaller"), 422);
     }
 
+    const restaurantId = await resolveRestaurantIdForMenuItem(itemId);
+    await guardRestaurantRoute(restaurantId, "menu.manage");
+
     const extension = file.type.split("/")[1] ?? "jpg";
-    const path = `${itemId}/${Date.now()}.${extension}`;
+    const path = menuImageObjectPath(restaurantId, itemId, extension);
     const supabase = await createClient();
     const buffer = Buffer.from(await file.arrayBuffer());
 

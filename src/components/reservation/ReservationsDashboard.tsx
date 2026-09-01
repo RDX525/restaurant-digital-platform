@@ -12,6 +12,13 @@ import {
 import type { PublicReservation, ReservationSettings } from "@/lib/reservation/types";
 import { STATUS_LABELS } from "@/lib/reservation/constants";
 import type { ReservationStatus } from "@/lib/reservation/constants";
+import {
+  filterReservationsForDashboard,
+  reservationListEmptyMessage,
+  reservationListHeading,
+  RESERVATION_LIST_FILTERS,
+  type ReservationListFilter,
+} from "@/lib/reservation/dashboard-filter";
 import { getErrorMessage, cn } from "@/lib/utils";
 import { replaceIfUnchanged } from "@/lib/react/replace-if-changed";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
@@ -110,6 +117,8 @@ export function ReservationsDashboard() {
     bookingMinNoticeHours: "2",
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<ReservationListFilter>("upcoming");
   const reservationsRequestRef = useRef<AbortController | null>(null);
 
   const loadReservations = useCallback(async () => {
@@ -164,24 +173,13 @@ export function ReservationsDashboard() {
 
   const calendarDays = useMemo(() => buildCalendarDays(reservations), [reservations]);
 
-  const upcoming = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return reservations
-      .filter(
-        (reservation) =>
-          reservation.date >= today &&
-          ["pending", "confirmed"].includes(reservation.status),
-      )
-      .sort((a, b) => {
-        const dateCompare = a.date.localeCompare(b.date);
-        if (dateCompare !== 0) return dateCompare;
-        return a.time.localeCompare(b.time);
-      });
-  }, [reservations]);
-
-  const filtered = selectedDate
-    ? upcoming.filter((reservation) => reservation.date === selectedDate)
-    : upcoming;
+  const filtered = useMemo(
+    () =>
+      filterReservationsForDashboard(reservations, filter, {
+        selectedDate,
+      }),
+    [reservations, filter, selectedDate],
+  );
 
   const selected =
     reservations.find((reservation) => reservation.id === selectedId) ?? null;
@@ -312,10 +310,20 @@ export function ReservationsDashboard() {
         <h2 className="font-display text-xl text-pine-900">Calendar</h2>
         <button
           type="button"
-          onClick={() => void loadReservations()}
+          onClick={() => {
+            void (async () => {
+              setRefreshing(true);
+              try {
+                await loadReservations();
+              } finally {
+                setRefreshing(false);
+              }
+            })();
+          }}
+          disabled={refreshing}
           className="btn-secondary inline-flex items-center gap-2 text-sm"
         >
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} aria-hidden="true" />
           Refresh
         </button>
       </div>
@@ -364,10 +372,28 @@ export function ReservationsDashboard() {
         </section>
       ) : null}
 
+      <div className="flex flex-wrap gap-2">
+        {RESERVATION_LIST_FILTERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setFilter(item.id)}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+              filter === item.id
+                ? "nav-gradient-active"
+                : "bg-white text-pine-600 ring-1 ring-pine-900/5",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <section className="platform-card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-semibold text-pine-900">Upcoming bookings</h3>
+            <h3 className="font-semibold text-pine-900">{reservationListHeading(filter)}</h3>
             {selectedDate ? (
               <button
                 type="button"
@@ -382,7 +408,7 @@ export function ReservationsDashboard() {
           {loading ? (
             <p className="text-sm text-pine-500">Loading reservations…</p>
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-pine-500">No upcoming reservations.</p>
+            <p className="text-sm text-pine-500">{reservationListEmptyMessage(filter)}</p>
           ) : (
             <ul className="space-y-2">
               {filtered.map((reservation) => (
