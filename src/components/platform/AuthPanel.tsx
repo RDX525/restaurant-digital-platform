@@ -194,10 +194,10 @@ export function AuthPanel({ initialMode }: { initialMode: AuthMode }) {
               type="button"
               onClick={() => switchMode(value)}
               className={cn(
-                "rounded-xl px-4 py-2.5 text-sm font-medium transition duration-200",
+                "min-h-11 rounded-xl px-2 py-2.5 text-center text-sm font-medium leading-tight touch-manipulation transition duration-200 sm:px-4",
                 mode === value
                   ? "bg-white text-pine-900 shadow-soft ring-1 ring-pine-900/5"
-                  : "text-pine-600 hover:text-pine-900",
+                  : "text-pine-600 [@media(hover:hover)]:hover:text-pine-900",
               )}
             >
               {label}
@@ -230,7 +230,7 @@ export function AuthPanel({ initialMode }: { initialMode: AuthMode }) {
             <button
               type="button"
               onClick={() => switchMode("forgot-password")}
-              className="text-sm font-medium text-pine-700 underline-offset-2 hover:underline"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-pine-700 underline-offset-2 touch-manipulation [@media(hover:hover)]:hover:underline"
             >
               Forgot password?
             </button>
@@ -380,7 +380,7 @@ function PasswordField({
         />
         <button
           type="button"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-pine-400 hover:text-pine-700"
+          className="absolute right-1 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center text-pine-400 touch-manipulation [@media(hover:hover)]:hover:text-pine-700"
           onClick={onToggleShow}
           aria-label={showPassword ? "Hide password" : "Show password"}
         >

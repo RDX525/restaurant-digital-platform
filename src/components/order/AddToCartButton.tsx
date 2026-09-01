@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import type { MenuItemWithModifiers } from "@/lib/menu/types";
@@ -20,7 +20,7 @@ interface AddToCartButtonProps {
   className?: string;
 }
 
-export function AddToCartButton({ item, restaurant, className }: AddToCartButtonProps) {
+export const AddToCartButton = memo(function AddToCartButton({ item, restaurant, className }: AddToCartButtonProps) {
   const { addItem, updateQuantity } = useOrderCartActions();
   const matchingLines = useCartLinesForMenuItem(item.id);
   const [open, setOpen] = useState(false);
@@ -116,7 +116,7 @@ export function AddToCartButton({ item, restaurant, className }: AddToCartButton
       ) : null}
     </>
   );
-}
+});
 
 function QuantityStepper({
   quantity,
@@ -291,7 +291,7 @@ function ModifierModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-pine-400 hover:bg-cream-100 hover:text-pine-800"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-pine-400 touch-manipulation [@media(hover:hover)]:hover:bg-cream-100 [@media(hover:hover)]:hover:text-pine-800"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -368,7 +368,7 @@ function ModifierModal({
               <button
                 type="button"
                 onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                className="rounded-lg border border-pine-900/10 p-2 hover:bg-white"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-pine-900/10 touch-manipulation [@media(hover:hover)]:hover:bg-white"
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" />
@@ -377,7 +377,7 @@ function ModifierModal({
               <button
                 type="button"
                 onClick={() => setQuantity((value) => value + 1)}
-                className="rounded-lg border border-pine-900/10 p-2 hover:bg-white"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-pine-900/10 touch-manipulation [@media(hover:hover)]:hover:bg-white"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" />

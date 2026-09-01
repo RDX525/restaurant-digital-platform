@@ -163,6 +163,14 @@ Existing indexes from earlier migrations (menu, analytics events, etc.) were ret
 | CDN cache headers on menu API | Editor needs fresh data; public menus served from RSC path |
 | Splitting `RestaurantShell` client boundary | Layout requires cart/session providers; larger refactor |
 
+### 12. Public site navigation was dynamic on every click
+
+**Finding:** Restaurant layout called `cookies()` and `headers()` on every page, so demo and live site clicks waited on a full RSC render instead of the router cache.
+
+**Fix:** Load published restaurants from `unstable_cache` first. Header/footer/CTA paths are resolved on the client from the current pathname. Table-session API runs only when the session cookie is present in the browser.
+
+**Files:** `src/lib/restaurant/page-data.ts`, `src/app/r/[slug]/layout.tsx`, `src/components/restaurant/RestaurantPathLink.tsx`
+
 ---
 
 ## Verification

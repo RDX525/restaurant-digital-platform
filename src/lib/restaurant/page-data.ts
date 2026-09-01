@@ -28,12 +28,21 @@ export async function loadGuestRestaurant(slug: string): Promise<PublicRestauran
   return loadRestaurantBySlug(slug, includeUnpublished);
 }
 
+/** Published lookup first so public pages stay cacheable and skip cookies/headers. */
+export async function loadPublicRestaurantBySlug(
+  slug: string,
+): Promise<PublicRestaurant | null> {
+  const published = await loadRestaurantBySlug(slug, false);
+  if (published) return published;
+  return loadGuestRestaurant(slug);
+}
+
 export async function getPublicRestaurant(
   params: Promise<{ slug: string }>,
   options?: { galleryLimit?: number },
 ): Promise<PublicRestaurant> {
   const { slug } = await params;
-  const restaurant = await loadGuestRestaurant(slug);
+  const restaurant = await loadPublicRestaurantBySlug(slug);
 
   if (!restaurant) notFound();
 

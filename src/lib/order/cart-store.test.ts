@@ -52,15 +52,14 @@ describe("cart-store", () => {
     expect(after[0]?.quantity).toBe(2);
   });
 
-  it("does not notify listeners when the snapshot reference is unchanged", () => {
-    const items = [line({ id: "1", menuItemId: "item-a", quantity: 1 })];
-    setCartItemsSnapshot(items);
+  it("does not notify listeners when cart contents are unchanged", () => {
+    setCartItemsSnapshot([line({ id: "1", menuItemId: "item-a", quantity: 1 })]);
 
     let calls = 0;
     const unsubscribe = subscribeCartItems(() => {
       calls += 1;
     });
-    setCartItemsSnapshot(items);
+    setCartItemsSnapshot([line({ id: "1", menuItemId: "item-a", quantity: 1 })]);
     unsubscribe();
     expect(calls).toBe(0);
   });

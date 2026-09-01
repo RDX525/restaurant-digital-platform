@@ -21,6 +21,7 @@ export async function GET() {
       restaurantId: session.restaurant_id,
       restaurantSlug: session.restaurant_slug,
       restaurantName: session.restaurant_name,
+      sessionId: session.session.id,
       tableId: session.table.id,
       tableLabel: session.table_label,
       locationId: session.location.id,

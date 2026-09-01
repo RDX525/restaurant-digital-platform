@@ -9,6 +9,9 @@ import {
 import { canInviteRole, INVITE_ROLES } from "@/lib/auth/roles";
 import { AuthorizationError } from "@/lib/auth/errors";
 import { auditFromAuth } from "@/lib/audit/log";
+import { loadRestaurantById } from "@/lib/restaurant/data";
+import { notifyTeamInvite } from "@/lib/notification/dispatch";
+import { getErrorMessage } from "@/lib/utils";
 import { z } from "zod";
 
 type Params = { params: Promise<{ id: string }> };
@@ -55,9 +58,33 @@ export async function POST(request: Request, { params }: Params) {
       metadata: { email: invite.email, role: invite.role },
     });
 
+    const acceptUrl = buildInviteAcceptUrl(token, new URL(request.url).origin);
+    const restaurant = await loadRestaurantById(id, { galleryLimit: 0 });
+    let emailSent = false;
+    let emailError: string | null = null;
+
+    try {
+      const delivery = await notifyTeamInvite({
+        restaurantName: restaurant?.name ?? "the restaurant",
+        email: invite.email,
+        role: invite.role,
+        acceptUrl,
+        inviterName: auth.email?.trim() || "A teammate",
+      });
+      emailSent = delivery.sent;
+      if (!delivery.sent) {
+        emailError =
+          "Invite email is not configured on this environment. Copy the link below and send it yourself.";
+      }
+    } catch (error) {
+      emailError = getErrorMessage(error);
+    }
+
     return jsonOk({
       invite,
-      acceptUrl: buildInviteAcceptUrl(token),
+      acceptUrl,
+      emailSent,
+      emailError,
     });
   } catch (error) {
     return jsonError(error, 400);

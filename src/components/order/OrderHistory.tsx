@@ -63,15 +63,7 @@ export function OrderHistory({ restaurant }: OrderHistoryProps) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mb-8">
-        <p className="eyebrow">Order history</p>
-        <h1 className="mt-1 font-display text-3xl text-pine-900">Your past orders</h1>
-        <p className="mt-2 text-sm text-pine-600">
-          Enter the email you used at checkout to view orders from {restaurant.name}.
-        </p>
-      </div>
-
+    <div className="rs-page--checkout rs-page-body">
       <form onSubmit={searchHistory} className="card-elevated mb-8 flex flex-wrap gap-3 p-5">
         <div className="min-w-0 flex-1">
           <label htmlFor="history-email" className="label">

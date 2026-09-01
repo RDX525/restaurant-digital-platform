@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { PublicRestaurant, Restaurant } from "./types";
+import { DAY_LABELS, DAYS_ORDER } from "./types";
 import { formatAddress } from "./service";
 import { getSiteUrl } from "@/lib/env/site-url";
 
@@ -67,22 +68,37 @@ export function buildRestaurantMetadata(
   };
 }
 
+function toAbsoluteRestaurantUrl(
+  restaurant: Pick<Restaurant, "slug" | "custom_domain">,
+  url: string | null,
+): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/r/")) return `${getSiteUrl()}${url}`;
+  return getRestaurantCanonicalUrl(restaurant, url);
+}
+
 export function buildRestaurantJsonLd(restaurant: PublicRestaurant) {
   const address = formatAddress(restaurant);
-  const openingHours = Object.entries(restaurant.opening_hours ?? {})
-    .filter(([, hours]) => hours && !hours.closed)
-    .map(([day, hours]) => {
-      const dayMap: Record<string, string> = {
-        monday: "Mo",
-        tuesday: "Tu",
-        wednesday: "We",
-        thursday: "Th",
-        friday: "Fr",
-        saturday: "Sa",
-        sunday: "Su",
-      };
-      return `${dayMap[day]} ${hours!.open}-${hours!.close}`;
-    });
+  const openingHoursSpecification = DAYS_ORDER.flatMap((day) => {
+    const hours = restaurant.opening_hours?.[day];
+    if (!hours || hours.closed) return [];
+    return [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: DAY_LABELS[day],
+        opens: hours.open,
+        closes: hours.close,
+      },
+    ];
+  });
+  const images = [
+    restaurant.hero_image_url,
+    restaurant.logo_url,
+    ...restaurant.gallery.map((item) => item.image_url),
+  ].filter((value): value is string => Boolean(value));
+  const reservationUrl = toAbsoluteRestaurantUrl(restaurant, restaurant.reservation_url);
+  const orderUrl = toAbsoluteRestaurantUrl(restaurant, restaurant.order_url);
 
   return {
     "@context": "https://schema.org",
@@ -92,7 +108,7 @@ export function buildRestaurantJsonLd(restaurant: PublicRestaurant) {
     url: getRestaurantCanonicalUrl(restaurant),
     telephone: restaurant.phone ?? undefined,
     email: restaurant.email ?? undefined,
-    image: restaurant.gallery.map((item) => item.image_url),
+    image: images.length > 0 ? images : undefined,
     logo: restaurant.logo_url ?? undefined,
     servesCuisine: "Restaurant",
     ...(address
@@ -118,22 +134,26 @@ export function buildRestaurantJsonLd(restaurant: PublicRestaurant) {
           },
         }
       : {}),
-    ...(openingHours.length > 0 ? { openingHoursSpecification: openingHours } : {}),
+    ...(openingHoursSpecification.length > 0 ? { openingHoursSpecification } : {}),
     sameAs: Object.values(restaurant.social_links ?? {}).filter(Boolean),
-    potentialAction: [
-      restaurant.reservation_url
-        ? {
-            "@type": "ReserveAction",
-            target: restaurant.reservation_url,
-          }
-        : null,
-      restaurant.order_url
-        ? {
-            "@type": "OrderAction",
-            target: restaurant.order_url,
-          }
-        : null,
-    ].filter(Boolean),
+    ...(reservationUrl || orderUrl
+      ? {
+          potentialAction: [
+            reservationUrl
+              ? {
+                  "@type": "ReserveAction",
+                  target: reservationUrl,
+                }
+              : null,
+            orderUrl
+              ? {
+                  "@type": "OrderAction",
+                  target: orderUrl,
+                }
+              : null,
+          ].filter(Boolean),
+        }
+      : {}),
   };
 }
 

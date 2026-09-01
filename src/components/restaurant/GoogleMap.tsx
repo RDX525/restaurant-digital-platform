@@ -20,14 +20,15 @@ export function GoogleMap({ restaurant }: GoogleMapProps) {
 
   return (
     <section aria-labelledby="map-heading">
-      <h2 id="map-heading" className="font-display text-2xl text-pine-900">
-        Find Us
+      <p className="eyebrow">Location</p>
+      <h2 id="map-heading" className="mt-2 font-display text-3xl tracking-tight text-pine-900">
+        Find us
       </h2>
       {address ? (
         <p className="mt-2 text-sm leading-relaxed text-pine-600">{address}</p>
       ) : null}
       {mapSrc ? (
-        <div className="mt-5 overflow-hidden rounded-2xl border border-pine-900/5 shadow-soft">
+        <div className="rs-media mt-5">
           <iframe
             title={`Map showing location of ${restaurant.name}`}
             src={mapSrc}
@@ -43,8 +44,8 @@ export function GoogleMap({ restaurant }: GoogleMapProps) {
           href={restaurant.google_maps_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block text-sm font-medium underline-offset-4 transition hover:underline"
-          style={{ color: restaurant.primary_color }}
+          className="mt-4 inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 transition [@media(hover:hover)]:hover:underline"
+          style={{ color: "rgb(var(--rs-primary))" }}
         >
           Open in Google Maps →
         </a>

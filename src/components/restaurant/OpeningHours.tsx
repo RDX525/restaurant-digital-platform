@@ -11,17 +11,19 @@ export function OpeningHours({ restaurant }: OpeningHoursProps) {
   return (
     <section aria-labelledby="hours-heading">
       <p className="eyebrow">Visit us</p>
-      <h2 id="hours-heading" className="mt-2 font-display text-2xl text-pine-900">
+      <h2 id="hours-heading" className="mt-2 font-display text-3xl tracking-tight text-pine-900">
         Opening hours
       </h2>
-      <p className="mt-1 text-sm text-pine-500">NZ local time</p>
-      <dl className="mt-5 divide-y divide-pine-900/5 overflow-hidden rounded-3xl border border-pine-900/[0.06] bg-white shadow-soft">
+      <p className="mt-1 text-sm text-pine-500">
+        {restaurant.country ? `${restaurant.country} local time` : "Local time"}
+      </p>
+      <dl className="mt-6 divide-y divide-black/5 overflow-hidden rounded-[1.8rem] bg-white/80 shadow-soft ring-1 ring-black/[0.04]">
         {DAYS_ORDER.map((day) => {
           const dayHours = hours[day];
           return (
             <div
               key={day}
-              className="flex items-center justify-between gap-4 px-5 py-4 text-sm [@media(hover:hover)]:hover:bg-cream-50/80"
+              className="flex items-center justify-between gap-4 px-5 py-4 text-sm [@media(hover:hover)]:hover:bg-[rgb(var(--rs-primary)/0.03)]"
             >
               <dt className="font-medium text-pine-800">{DAY_LABELS[day]}</dt>
               <dd className="text-pine-600">

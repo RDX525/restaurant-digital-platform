@@ -81,7 +81,7 @@ const getCachedPublishedRestaurant =
     : unstable_cache(
         async (slug: string) =>
           loadRestaurantBySlugImpl(slug, { includeUnpublished: false, galleryLimit: 0 }),
-        ["public-restaurant-by-slug"],
+        ["public-restaurant-by-slug", "harbour-demo-v2"],
         { revalidate: 60, tags: [PUBLIC_RESTAURANT_CACHE_TAG] },
       );
 

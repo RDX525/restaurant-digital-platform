@@ -16,11 +16,13 @@ import {
   calculateCartTotals,
   calculateLineTotal,
   clearCart,
+  dineInCartScope,
   mergeItemIntoCart,
   countUniqueDishes,
   readCart,
   writeCart,
 } from "@/lib/order/cart";
+import { useTableSession } from "@/components/table/TableSessionProvider";
 import {
   getCartLinesForMenuItem,
   getEmptyCartLines,
@@ -51,11 +53,6 @@ const OrderCartStateContext = createContext<OrderCartContextValue | null>(null);
 const OrderCartActionsContext = createContext<OrderCartActions | null>(null);
 const OrderCartCountContext = createContext(0);
 
-function loadInitialItems(restaurantSlug: string): CartLineItem[] {
-  if (typeof window === "undefined") return [];
-  return readCart(restaurantSlug).items;
-}
-
 export function OrderCartProvider({
   restaurantSlug,
   children,
@@ -63,29 +60,46 @@ export function OrderCartProvider({
   restaurantSlug: string;
   children: React.ReactNode;
 }) {
+  const { session, loading: sessionLoading } = useTableSession();
+  const cartScope = sessionLoading
+    ? null
+    : session && session.restaurantSlug === restaurantSlug
+      ? dineInCartScope(session.tableId, session.sessionId)
+      : "web";
   const [items, setItems] = useState<CartLineItem[]>([]);
   const itemsRef = useRef<CartLineItem[]>([]);
 
   useEffect(() => {
-    const next = loadInitialItems(restaurantSlug);
+    if (cartScope === null) {
+      itemsRef.current = [];
+      setItems([]);
+      setCartItemsSnapshot([]);
+      return;
+    }
+
+    const next = readCart(restaurantSlug, cartScope).items;
     itemsRef.current = next;
     setItems(next);
     setCartItemsSnapshot(next);
-  }, [restaurantSlug]);
+  }, [restaurantSlug, cartScope]);
 
   const persist = useCallback(
     (updater: CartLineItem[] | ((current: CartLineItem[]) => CartLineItem[])) => {
+      if (cartScope === null) return;
       const nextItems = typeof updater === "function" ? updater(itemsRef.current) : updater;
       itemsRef.current = nextItems;
-      writeCart({
-        restaurantSlug,
-        items: nextItems,
-        updatedAt: new Date().toISOString(),
-      });
+      writeCart(
+        {
+          restaurantSlug,
+          items: nextItems,
+          updatedAt: new Date().toISOString(),
+        },
+        cartScope,
+      );
       setItems(nextItems);
       setCartItemsSnapshot(nextItems);
     },
-    [restaurantSlug],
+    [restaurantSlug, cartScope],
   );
 
   const addItem = useCallback(
@@ -131,11 +145,12 @@ export function OrderCartProvider({
   );
 
   const clearAll = useCallback(() => {
+    if (cartScope === null) return;
     itemsRef.current = [];
-    clearCart(restaurantSlug);
+    clearCart(restaurantSlug, cartScope);
     setItems([]);
     setCartItemsSnapshot([]);
-  }, [restaurantSlug]);
+  }, [restaurantSlug, cartScope]);
 
   const { subtotal } = useMemo(
     () => calculateCartTotals(items, "pickup"),

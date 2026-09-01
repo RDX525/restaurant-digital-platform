@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth/demo-team-store";
 import { isDemoRestaurantId } from "@/lib/restaurant/demo-data";
 import { addRestaurantMember } from "@/lib/auth/membership";
+import { resolveQrSiteUrl } from "@/lib/env/site-url";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -224,7 +225,7 @@ export async function acceptRestaurantInvite(input: {
   };
 }
 
-export function buildInviteAcceptUrl(token: string): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+export function buildInviteAcceptUrl(token: string, requestOrigin?: string): string {
+  const siteUrl = resolveQrSiteUrl(requestOrigin);
   return `${siteUrl}/auth/accept-invite?token=${encodeURIComponent(token)}`;
 }

@@ -17,6 +17,7 @@ import {
 } from "@/lib/menu/service";
 import { fetchActiveMenuForRestaurant } from "@/lib/restaurant/service";
 import { PUBLIC_MENU_CACHE_TAG } from "@/lib/cache/public-site";
+import type { FullMenu, Menu } from "@/lib/menu/types";
 
 export async function loadMenusForRestaurant(restaurantId: string): Promise<Menu[]> {
   if (isDemoRestaurantId(restaurantId) && !isSupabaseConfigured()) {
@@ -105,7 +106,7 @@ async function loadFullMenuPublic(menuId: string): Promise<FullMenu | null> {
 const getCachedPublicMenuForRestaurant =
   process.env.VITEST === "true"
     ? loadPublicMenuForRestaurantUncached
-    : unstable_cache(loadPublicMenuForRestaurantUncached, ["public-menu-for-restaurant"], {
+    : unstable_cache(loadPublicMenuForRestaurantUncached, ["public-menu-for-restaurant", "harbour-demo-v2"], {
         revalidate: 60,
         tags: [PUBLIC_MENU_CACHE_TAG],
       });

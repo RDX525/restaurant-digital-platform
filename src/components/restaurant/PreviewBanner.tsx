@@ -13,7 +13,7 @@ export function PreviewBanner() {
 
   return (
     <div
-      className="bg-brand-surface relative overflow-hidden border-b border-gold-500/20 px-4 py-3 text-center text-sm font-medium text-gold-300"
+      className="bg-brand-surface relative overflow-hidden border-b border-gold-500/20 px-4 py-3 text-center text-sm font-medium text-gold-300 sm:px-6"
       role="status"
     >
       <div className="grain pointer-events-none absolute inset-0 z-[1] opacity-20" aria-hidden="true" />

@@ -3,21 +3,30 @@ import { calculateOrderTotals } from "./pricing";
 
 export const DELIVERY_FEE = 5.5;
 
-export function cartStorageKey(slug: string): string {
-  return `kati-cart:${slug}`;
+export function cartStorageKey(slug: string, scope = "web"): string {
+  return scope === "web" ? `kati-cart:${slug}` : `kati-cart:${slug}:${scope}`;
 }
 
-export function idempotencyStorageKey(slug: string): string {
-  return `kati-idempotency:${slug}`;
+export function idempotencyStorageKey(slug: string, scope = "web"): string {
+  return scope === "web"
+    ? `kati-idempotency:${slug}`
+    : `kati-idempotency:${slug}:${scope}`;
+}
+
+export function dineInCartScope(tableId: string, sessionId: string): string {
+  return `table:${tableId}:session:${sessionId}`;
 }
 
 export function createLineItemId(): string {
   return `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function getOrCreateIdempotencyKey(restaurantSlug: string): string {
+export function getOrCreateIdempotencyKey(
+  restaurantSlug: string,
+  scope = "web",
+): string {
   if (typeof window === "undefined") return crypto.randomUUID();
-  const key = idempotencyStorageKey(restaurantSlug);
+  const key = idempotencyStorageKey(restaurantSlug, scope);
   const existing = window.sessionStorage.getItem(key);
   if (existing) return existing;
   const value = crypto.randomUUID();
@@ -25,9 +34,9 @@ export function getOrCreateIdempotencyKey(restaurantSlug: string): string {
   return value;
 }
 
-export function clearIdempotencyKey(restaurantSlug: string): void {
+export function clearIdempotencyKey(restaurantSlug: string, scope = "web"): void {
   if (typeof window === "undefined") return;
-  window.sessionStorage.removeItem(idempotencyStorageKey(restaurantSlug));
+  window.sessionStorage.removeItem(idempotencyStorageKey(restaurantSlug, scope));
 }
 
 export function calculateLineTotal(
@@ -132,13 +141,16 @@ export function validateModifierSelection(
   return null;
 }
 
-export function readCart(slug: string): import("./types").CartState {
+export function readCart(
+  slug: string,
+  scope = "web",
+): import("./types").CartState {
   if (typeof window === "undefined") {
     return { restaurantSlug: slug, items: [], updatedAt: new Date().toISOString() };
   }
 
   try {
-    const raw = window.localStorage.getItem(cartStorageKey(slug));
+    const raw = window.localStorage.getItem(cartStorageKey(slug, scope));
     if (!raw) {
       return { restaurantSlug: slug, items: [], updatedAt: new Date().toISOString() };
     }
@@ -154,12 +166,15 @@ export function readCart(slug: string): import("./types").CartState {
   }
 }
 
-export function writeCart(cart: import("./types").CartState): void {
+export function writeCart(cart: import("./types").CartState, scope = "web"): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(cartStorageKey(cart.restaurantSlug), JSON.stringify(cart));
+  window.localStorage.setItem(
+    cartStorageKey(cart.restaurantSlug, scope),
+    JSON.stringify(cart),
+  );
 }
 
-export function clearCart(slug: string): void {
+export function clearCart(slug: string, scope = "web"): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(cartStorageKey(slug));
+  window.localStorage.removeItem(cartStorageKey(slug, scope));
 }

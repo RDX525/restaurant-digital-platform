@@ -35,8 +35,9 @@ export default async function MenuPage({ params }: RestaurantPageProps) {
         eyebrow="Dine with us"
         title="Our Menu"
         description={`Seasonal dishes crafted by the team at ${restaurant.name}.`}
+        descriptionId="menu-intro"
       />
-      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rs-page--readable min-w-0 pb-12 sm:pb-16">
         <RestaurantMenuView menu={menu} restaurant={restaurant} />
       </div>
     </>

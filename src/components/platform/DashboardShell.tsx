@@ -67,7 +67,6 @@ function DashboardNavLink({
     return (
       <Link
         href={href}
-        prefetch
         className={cn(
           "group flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors duration-150",
           active
@@ -97,7 +96,6 @@ function DashboardNavLink({
   return (
     <Link
       href={href}
-      prefetch
       className={cn(
         "flex items-center gap-3 rounded-2xl px-3 py-3",
         active ? "nav-gradient-active" : "text-pine-700 hover:bg-cream-50",
@@ -127,8 +125,13 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
     if (!mobileNavOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [mobileNavOpen]);
 
@@ -198,6 +201,14 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col dashboard-bg">
+        {mobileNavOpen ? (
+          <button
+            type="button"
+            className="fixed inset-0 z-20 bg-pine-950/40 lg:hidden"
+            aria-label="Close menu"
+            onClick={() => setMobileNavOpen(false)}
+          />
+        ) : null}
         <header
           className="sticky top-0 z-30 border-b border-pine-900/5 glass lg:hidden"
           style={{ paddingTop: "env(safe-area-inset-top)" }}

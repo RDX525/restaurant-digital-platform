@@ -35,7 +35,7 @@ export function getCartItemsSnapshot(): CartLineItem[] {
 }
 
 export function setCartItemsSnapshot(items: CartLineItem[]): void {
-  if (items === cartItemsSnapshot) return;
+  if (items === cartItemsSnapshot || linesEqual(items, cartItemsSnapshot)) return;
   cartItemsSnapshot = items;
   listeners.forEach((listener) => listener());
 }

@@ -4,6 +4,19 @@ import type { ReservationRecord } from "@/lib/reservation/types";
 import type { ReservationAction } from "@/lib/reservation/demo-store";
 import type { NotificationType } from "./constants";
 import { sendTransactionalNotification } from "./service";
+import { getEmailProvider } from "./providers";
+import { ResendEmailProvider } from "./providers/resend";
+import { renderNotificationTemplate } from "./templates";
+
+function getTeamInviteEmailProvider() {
+  const hasResend =
+    Boolean(process.env.RESEND_API_KEY?.trim()) &&
+    Boolean(process.env.RESEND_FROM_EMAIL?.trim());
+  if (hasResend) {
+    return new ResendEmailProvider();
+  }
+  return getEmailProvider();
+}
 
 function formatMoney(amount: number): string {
   return `$${amount.toFixed(2)}`;
@@ -134,4 +147,32 @@ export async function notifyReservationReminder(
   restaurantName: string,
 ): Promise<void> {
   await notifyReservationEvent(reservation, "RESERVATION_REMINDER", restaurantName);
+}
+
+export async function notifyTeamInvite(input: {
+  restaurantName: string;
+  email: string;
+  role: string;
+  acceptUrl: string;
+  inviterName: string;
+}): Promise<{ sent: boolean; provider: string }> {
+  const roleLabel = input.role.charAt(0).toUpperCase() + input.role.slice(1);
+  const rendered = renderNotificationTemplate("TEAM_INVITE", {
+    restaurantName: input.restaurantName,
+    role: roleLabel,
+    acceptUrl: input.acceptUrl,
+    inviterName: input.inviterName,
+  });
+
+  const provider = getTeamInviteEmailProvider();
+  await provider.send({
+    to: input.email,
+    subject: rendered.subject,
+    body: rendered.emailBody,
+  });
+
+  return {
+    sent: provider.name !== "demo",
+    provider: provider.name,
+  };
 }

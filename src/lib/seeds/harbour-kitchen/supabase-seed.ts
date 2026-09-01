@@ -19,6 +19,17 @@ import { normalizeOpeningHours } from "@/lib/restaurant/opening-hours";
 
 const RID = HARBOUR_RESTAURANT_ID;
 
+async function mustUpsert(
+  supabase: SupabaseClient,
+  table: string,
+  row: Record<string, unknown> | Record<string, unknown>[],
+): Promise<void> {
+  const { error } = await supabase.from(table).upsert(row);
+  if (error) {
+    throw new Error(`Seed upsert ${table} failed: ${error.message}`);
+  }
+}
+
 async function deleteHarbourKitchenData(supabase: SupabaseClient): Promise<void> {
   const fullMenu = buildHarbourKitchenFullMenu();
   const groupIds = fullMenu.categories.flatMap((c) =>
@@ -59,7 +70,7 @@ export async function seedHarbourKitchenSupabase(
   const restaurant = buildHarbourKitchenRestaurant();
   const { gallery, ...restaurantRow } = restaurant;
 
-  await supabase.from("restaurants").upsert({
+  await mustUpsert(supabase, "restaurants", {
     id: RID,
     name: restaurant.name,
     slug: HARBOUR_KITCHEN_SLUG,
@@ -124,7 +135,7 @@ export async function seedHarbourKitchenSupabase(
     });
 
     for (const menuItem of category.items) {
-      await supabase.from("menu_items").upsert({
+      await mustUpsert(supabase, "menu_items", {
         id: menuItem.id,
         category_id: menuItem.category_id,
         name: menuItem.name,

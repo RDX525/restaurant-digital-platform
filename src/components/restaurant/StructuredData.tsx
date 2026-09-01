@@ -13,12 +13,10 @@ export function StructuredData({
   restaurant,
   breadcrumbs = [],
 }: StructuredDataProps) {
-  const schemas = [
-    buildRestaurantJsonLd(restaurant),
-    ...(breadcrumbs.length > 0
+  const schemas =
+    breadcrumbs.length > 0
       ? [buildBreadcrumbJsonLd(restaurant, breadcrumbs)]
-      : []),
-  ];
+      : [buildRestaurantJsonLd(restaurant)];
 
   return (
     <script

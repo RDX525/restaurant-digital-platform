@@ -36,7 +36,7 @@ export default async function ContactPage({ params }: RestaurantPageProps) {
         title="We'd love to hear from you"
         description="Visit us, call ahead, or send a message."
       />
-      <div className="mx-auto max-w-6xl space-y-12 px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rs-page rs-page-body space-y-12">
         <ContactCard restaurant={restaurant} />
         <div className="grid gap-12 lg:grid-cols-2">
           <OpeningHours restaurant={restaurant} />

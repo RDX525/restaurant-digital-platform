@@ -4,6 +4,7 @@ interface PageHeaderProps {
   restaurant: PublicRestaurant;
   title: string;
   description?: string;
+  descriptionId?: string;
   eyebrow?: string;
 }
 
@@ -11,28 +12,22 @@ export function PageHeader({
   restaurant,
   title,
   description,
+  descriptionId,
   eyebrow,
 }: PageHeaderProps) {
   return (
     <header className="public-page-header">
-      <div className="grain pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.12]"
-        style={{
-          background: `radial-gradient(circle at 20% 20%, ${restaurant.primary_color}, transparent 45%)`,
-        }}
-        aria-hidden="true"
-      />
-      <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-        {eyebrow ? (
-          <p className="eyebrow" style={{ color: restaurant.primary_color }}>
-            {eyebrow}
+      <div className="rs-page-header-inner relative">
+        {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
+        <div className="divider-gold mt-5" aria-hidden="true" />
+        <h1 className="section-title mt-6 max-w-3xl break-words">{title}</h1>
+        {description ? (
+          <p id={descriptionId} className="section-subtitle scroll-mt-28 text-pretty">
+            {description}
           </p>
         ) : null}
-        <div className="divider-gold mt-4" aria-hidden="true" />
-        <h1 className="section-title mt-5 max-w-3xl">{title}</h1>
-        {description ? (
-          <p className="section-subtitle">{description}</p>
+        {restaurant.tagline && !description ? (
+          <p className="section-subtitle">{restaurant.tagline}</p>
         ) : null}
       </div>
     </header>

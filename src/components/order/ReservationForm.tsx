@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarDays, CheckCircle2, Loader2 } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { useRestaurantNav } from "@/hooks/useRestaurantNav";
@@ -39,7 +39,10 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
     {},
   );
 
-  const loadAvailability = useCallback(async () => {
+  const selectedTimeRef = useRef(form.time);
+  selectedTimeRef.current = form.time;
+
+  const loadAvailability = useCallback(async (signal?: AbortSignal) => {
     if (!form.date) {
       setSlots([]);
       return;
@@ -53,24 +56,34 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
         date: form.date,
         guestCount: form.guests,
       });
-      const response = await fetch(`/api/reservations/availability?${params}`);
+      const response = await fetch(`/api/reservations/availability?${params}`, { signal });
       const payload = await response.json();
+      if (signal?.aborted) return;
       if (!response.ok) throw new Error(payload.error ?? "Could not load availability");
       setSlots(payload.slots ?? []);
       setTimezone(payload.timezone ?? "");
-      if (form.time && !payload.slots?.some((slot: AvailabilitySlot) => slot.time === form.time && slot.available)) {
+      const selectedTime = selectedTimeRef.current;
+      if (
+        selectedTime &&
+        !payload.slots?.some((slot: AvailabilitySlot) => slot.time === selectedTime && slot.available)
+      ) {
         setForm((current) => ({ ...current, time: "" }));
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(getErrorMessage(err));
       setSlots([]);
     } finally {
-      setLoadingSlots(false);
+      if (!signal?.aborted) setLoadingSlots(false);
     }
-  }, [form.date, form.guests, form.time, restaurant.slug]);
+  }, [form.date, form.guests, restaurant.slug]);
 
   useEffect(() => {
-    void loadAvailability();
+    const controller = new AbortController();
+    void loadAvailability(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [loadAvailability]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

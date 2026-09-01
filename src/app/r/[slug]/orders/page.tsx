@@ -1,6 +1,7 @@
 import { getPublicRestaurant } from "@/lib/restaurant/page-data";
 import { buildRestaurantMetadata } from "@/lib/restaurant/seo";
 import { OrderHistory } from "@/components/order/OrderHistory";
+import { PageHeader } from "@/components/restaurant/PageHeader";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
 export const revalidate = 60;
@@ -16,5 +17,15 @@ export async function generateMetadata({ params }: RestaurantPageProps) {
 
 export default async function OrdersHistoryPage({ params }: RestaurantPageProps) {
   const restaurant = await getPublicRestaurant(params);
-  return <OrderHistory restaurant={restaurant} />;
+  return (
+    <>
+      <PageHeader
+        restaurant={restaurant}
+        eyebrow="Orders"
+        title="Your order history"
+        description={`Look up recent orders from ${restaurant.name}.`}
+      />
+      <OrderHistory restaurant={restaurant} />
+    </>
+  );
 }

@@ -24,7 +24,7 @@ import { replaceIfUnchanged } from "@/lib/react/replace-if-changed";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { DashboardResourceGate } from "@/components/dashboard/DashboardResourceGate";
 
-const POLL_INTERVAL_MS = 10000;
+const POLL_INTERVAL_MS = 15000;
 
 type Action = "confirm" | "reject" | "cancel" | "complete" | "no_show";
 

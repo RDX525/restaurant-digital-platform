@@ -34,7 +34,7 @@ export default async function GalleryPage({ params }: RestaurantPageProps) {
         title="A look inside"
         description={`The atmosphere, food, and people that make ${restaurant.name} special.`}
       />
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rs-page rs-page-body">
         <GalleryGrid images={restaurant.gallery} restaurantName={restaurant.name} />
       </div>
     </>

@@ -20,7 +20,7 @@ import { replaceIfUnchanged } from "@/lib/react/replace-if-changed";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { DashboardResourceGate } from "@/components/dashboard/DashboardResourceGate";
 
-const POLL_INTERVAL_MS = 8000;
+const POLL_INTERVAL_MS = 12000;
 
 function orderTypeIcon(type: PlacedOrder["customer"]["orderType"]) {
   if (type === "delivery") return Truck;

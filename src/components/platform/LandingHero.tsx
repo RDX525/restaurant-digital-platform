@@ -67,7 +67,7 @@ export function LandingHero() {
             </div>
           </div>
 
-          <p className="mt-auto pt-8 text-xs text-pine-500 animate-fade-in opacity-0 stagger-5">
+          <p className="mt-auto pt-8 text-xs text-pine-500 animate-fade-in opacity-0 stagger-5" suppressHydrationWarning>
             © {new Date().getFullYear()} Kāti · Crafted for Aotearoa New Zealand
           </p>
         </div>

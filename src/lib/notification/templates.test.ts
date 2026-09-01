@@ -29,4 +29,18 @@ describe("notification templates", () => {
     expect(rendered.emailBody).toContain("2026-09-05");
     expect(rendered.smsBody).toContain("18:00");
   });
+
+  it("renders team invite template with accept url", () => {
+    const rendered = renderNotificationTemplate("TEAM_INVITE", {
+      restaurantName: "Harbour Kitchen",
+      role: "Staff",
+      acceptUrl: "https://example.com/auth/accept-invite?token=abc",
+      inviterName: "owner@harbour.test",
+    });
+
+    expect(rendered.subject).toContain("Harbour Kitchen");
+    expect(rendered.emailBody).toContain("owner@harbour.test");
+    expect(rendered.emailBody).toContain("Staff");
+    expect(rendered.emailBody).toContain("https://example.com/auth/accept-invite?token=abc");
+  });
 });

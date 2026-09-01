@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import {
+  buildRestaurantJsonLd,
   buildRestaurantMetadata,
   getRestaurantBasePath,
   getRestaurantCanonicalUrl,
@@ -29,7 +30,10 @@ const restaurant: PublicRestaurant = {
   latitude: null,
   longitude: null,
   google_maps_url: null,
-  opening_hours: {},
+  opening_hours: {
+    monday: { open: "07:00", close: "22:00", closed: false },
+    sunday: { open: "08:00", close: "21:00", closed: true },
+  },
   social_links: {},
   order_url: "/r/demo-restaurant/order",
   reservation_url: "/r/demo-restaurant/reservations",
@@ -56,6 +60,26 @@ describe("restaurant seo", () => {
     expect(metadata.title).toBe("Menu | Demo Restaurant");
     expect(metadata.alternates?.canonical).toContain("/menu");
     expect(metadata.openGraph?.title).toBe("Menu | Demo Restaurant");
+  });
+
+  it("emits schema.org opening hours and absolute action urls", () => {
+    const jsonLd = buildRestaurantJsonLd(restaurant);
+    expect(jsonLd.openingHoursSpecification).toEqual([
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Monday",
+        opens: "07:00",
+        closes: "22:00",
+      },
+    ]);
+    expect(jsonLd.potentialAction).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          "@type": "OrderAction",
+          target: expect.stringMatching(/\/r\/demo-restaurant\/order$/),
+        }),
+      ]),
+    );
   });
 });
 

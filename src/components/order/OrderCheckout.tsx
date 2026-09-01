@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -17,7 +18,12 @@ import {
 } from "lucide-react";
 import type { FullMenu } from "@/lib/menu/types";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
-import { calculateCartTotals, clearIdempotencyKey, getOrCreateIdempotencyKey } from "@/lib/order/cart";
+import {
+  calculateCartTotals,
+  clearIdempotencyKey,
+  dineInCartScope,
+  getOrCreateIdempotencyKey,
+} from "@/lib/order/cart";
 import type {
   CheckoutStep,
   CustomerDetails,
@@ -43,6 +49,9 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
   const isDineIn = Boolean(
     tableSession && tableSession.restaurantSlug === restaurant.slug,
   );
+  const cartScope = isDineIn && tableSession
+    ? dineInCartScope(tableSession.tableId, tableSession.sessionId)
+    : "web";
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +131,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
         phone: contact.phone,
       };
 
-      const idempotencyKey = getOrCreateIdempotencyKey(restaurant.slug);
+      const idempotencyKey = getOrCreateIdempotencyKey(restaurant.slug, cartScope);
 
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
@@ -191,7 +200,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
         }
       }
       clearAll();
-      clearIdempotencyKey(restaurant.slug);
+      clearIdempotencyKey(restaurant.slug, cartScope);
       setStep("confirmation");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
@@ -205,6 +214,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
       <ConfirmationView
         order={placedOrder}
         restaurant={restaurant}
+        menu={menu}
         homeHref={homeHref}
         menuHref={menuHref}
         ordersHref={ordersHref}
@@ -213,7 +223,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="rs-page--checkout rs-page-body">
       <StepIndicator step={step} />
 
       {step === "cart" ? (
@@ -383,9 +393,18 @@ function CartStep({
 
   return (
     <div className="space-y-6">
-      <div className="card-elevated divide-y divide-pine-900/5">
-        {items.map((item) => (
-          <div key={item.id} className="flex gap-4 p-5">
+      <div className="card-elevated overflow-hidden">
+        <div className="border-b border-pine-900/5 px-4 py-4 sm:px-5">
+          <p className="eyebrow">Your order</p>
+          <h2 className="mt-1 font-display text-2xl text-pine-900">Dishes in your bag</h2>
+        </div>
+        <div className="divide-y divide-pine-900/5">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-start gap-3.5 p-4 sm:gap-5 sm:p-5">
+            <CartItemPhoto
+              name={item.name}
+              photoUrl={findMenuItemPhoto(menu, item.menuItemId)}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -416,7 +435,7 @@ function CartStep({
                   <button
                     type="button"
                     onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                    className="rounded-lg border border-pine-900/10 p-2 hover:bg-cream-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pine-900/10 touch-manipulation [@media(hover:hover)]:hover:bg-cream-50"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
@@ -425,7 +444,7 @@ function CartStep({
                   <button
                     type="button"
                     onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                    className="rounded-lg border border-pine-900/10 p-2 hover:bg-cream-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pine-900/10 touch-manipulation [@media(hover:hover)]:hover:bg-cream-50"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
@@ -434,7 +453,7 @@ function CartStep({
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
-                  className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
+                  className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-red-600 [@media(hover:hover)]:hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                   Remove
@@ -443,6 +462,7 @@ function CartStep({
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       <SummaryCard totals={totals} />
@@ -692,18 +712,20 @@ function PaymentStep({
 function ConfirmationView({
   order,
   restaurant,
+  menu,
   homeHref,
   menuHref,
   ordersHref,
 }: {
   order: PlacedOrder;
   restaurant: PublicRestaurant;
+  menu: FullMenu | null;
   homeHref: string;
   menuHref: string;
   ordersHref: string;
 }) {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="rs-page--checkout rs-page-body">
       <div className="card-elevated p-8 text-center sm:p-10">
         <CheckCircle2 className="mx-auto h-14 w-14 text-gold-500" aria-hidden="true" />
         <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-pine-400">
@@ -732,13 +754,23 @@ function ConfirmationView({
             <span aria-hidden="true">·</span>
             <span>Ready around {formatTime(order.estimatedReadyAt)}</span>
           </div>
-          <ul className="mt-4 space-y-2 border-t border-pine-900/5 pt-4 text-sm text-pine-700">
+          <ul className="mt-4 space-y-3 border-t border-pine-900/5 pt-4 text-sm text-pine-700">
             {order.items.map((item) => (
-              <li key={`${item.menuItemId}-${item.name}`} className="flex justify-between gap-3">
-                <span>
-                  {item.quantity}× {item.name}
+              <li
+                key={`${item.menuItemId}-${item.name}`}
+                className="flex items-center justify-between gap-3"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <CartItemPhoto
+                    name={item.name}
+                    photoUrl={findMenuItemPhoto(menu, item.menuItemId)}
+                    size="sm"
+                  />
+                  <span className="min-w-0">
+                    {item.quantity}× {item.name}
+                  </span>
                 </span>
-                <span>{formatPrice(item.lineTotal)}</span>
+                <span className="shrink-0">{formatPrice(item.lineTotal)}</span>
               </li>
             ))}
           </ul>
@@ -833,6 +865,53 @@ function Field({
         className="input"
       />
       {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+}
+
+function findMenuItemPhoto(menu: FullMenu | null, menuItemId: string): string | null {
+  if (!menu) return null;
+  for (const category of menu.categories) {
+    const match = category.items.find((item) => item.id === menuItemId);
+    if (match?.photo_url) return match.photo_url;
+  }
+  return null;
+}
+
+function CartItemPhoto({
+  name,
+  photoUrl,
+  size = "md",
+}: {
+  name: string;
+  photoUrl: string | null;
+  size?: "sm" | "md";
+}) {
+  const [failed, setFailed] = useState(false);
+  const showPhoto = Boolean(photoUrl) && !failed;
+  const box = size === "sm" ? "h-12 w-12" : "h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20";
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden rounded-2xl bg-[rgb(var(--rs-primary)/0.08)] shadow-soft ring-1 ring-black/[0.05] ${box}`}
+    >
+      {showPhoto ? (
+        <Image
+          src={photoUrl as string}
+          alt=""
+          fill
+          className="object-cover"
+          sizes={size === "sm" ? "48px" : "80px"}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span
+          className="flex h-full items-center justify-center font-display text-lg"
+          style={{ color: "rgb(var(--rs-primary) / 0.4)" }}
+          aria-hidden="true"
+        >
+          {name.charAt(0)}
+        </span>
+      )}
     </div>
   );
 }

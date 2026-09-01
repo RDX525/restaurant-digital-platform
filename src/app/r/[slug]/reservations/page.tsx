@@ -34,7 +34,7 @@ export default async function ReservationsPage({ params }: RestaurantPageProps) 
         title="Book a table"
         description={`Reserve your spot at ${restaurant.name}.`}
       />
-      <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rs-page--form rs-page-body">
         <ReservationForm restaurant={restaurant} />
       </div>
     </>

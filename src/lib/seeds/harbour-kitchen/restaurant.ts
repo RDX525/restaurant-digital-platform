@@ -20,10 +20,10 @@ export function buildHarbourKitchenRestaurant(): PublicRestaurant {
     logo_url: null,
     hero_image_url:
       "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600",
-    primary_color: "#0c4a6e",
-    secondary_color: "#164e63",
-    accent_color: "#f59e0b",
-    phone: "+64 9 555 0142",
+    primary_color: "#163A40",
+    secondary_color: "#1E4D42",
+    accent_color: "#C6A15B",
+    phone: "+64 9 000 0000",
     email: `hello@${DEMO_EMAIL_DOMAIN}`,
     address_line1: "17 Halsey Street",
     address_line2: "Wynyard Quarter",
@@ -46,6 +46,7 @@ export function buildHarbourKitchenRestaurant(): PublicRestaurant {
     social_links: {
       instagram: "https://instagram.com/harbourkitchen.demo",
       facebook: "https://facebook.com/harbourkitchen.demo",
+      twitter: "https://x.com/harbourkitchen.demo",
     },
     order_url: `/r/${HARBOUR_KITCHEN_SLUG}/order`,
     reservation_url: `/r/${HARBOUR_KITCHEN_SLUG}/reservations`,
@@ -61,8 +62,8 @@ export function buildHarbourKitchenRestaurant(): PublicRestaurant {
         id: "00000000-0000-4000-8000-000000000211",
         restaurant_id: id,
         image_url:
-          "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200",
-        caption: "Harbour-side dining room",
+          "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=2000&q=85",
+        caption: "Chefs at the harbour pass",
         sort_order: 0,
         created_at: SEED_TIMESTAMP,
       },
@@ -70,7 +71,7 @@ export function buildHarbourKitchenRestaurant(): PublicRestaurant {
         id: "00000000-0000-4000-8000-000000000212",
         restaurant_id: id,
         image_url:
-          "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200",
+          "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80",
         caption: "Open kitchen pass",
         sort_order: 1,
         created_at: SEED_TIMESTAMP,
@@ -79,9 +80,18 @@ export function buildHarbourKitchenRestaurant(): PublicRestaurant {
         id: "00000000-0000-4000-8000-000000000213",
         restaurant_id: id,
         image_url:
-          "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200",
+          "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80",
         caption: "Seasonal seafood",
         sort_order: 2,
+        created_at: SEED_TIMESTAMP,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000214",
+        restaurant_id: id,
+        image_url:
+          "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+        caption: "Harbour-side dining room",
+        sort_order: 3,
         created_at: SEED_TIMESTAMP,
       },
     ],

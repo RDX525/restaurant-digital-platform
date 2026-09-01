@@ -26,6 +26,7 @@ export const NOTIFICATION_TYPES = [
   "RESERVATION_REMINDER",
   "RESERVATION_CANCELLED",
   "RESERVATION_CHANGED",
+  "TEAM_INVITE",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

@@ -174,9 +174,11 @@ export function RestaurantSettingsEditor({
           opening_hours: normalizeOpeningHours(base.opening_hours),
           social_links: base.social_links ?? {},
           gallery: current?.gallery ?? base.gallery ?? [],
-          logo_url: assetType === "logo" ? data.url : (current?.logo_url ?? base.logo_url),
+          logo_url: assetType === "logo" ? data.url ?? null : (current?.logo_url ?? base.logo_url ?? null),
           hero_image_url:
-            assetType === "hero" ? data.url : (current?.hero_image_url ?? base.hero_image_url),
+            assetType === "hero"
+              ? data.url ?? null
+              : (current?.hero_image_url ?? base.hero_image_url ?? null),
         };
       });
       setBrandingUpload(assetType, {

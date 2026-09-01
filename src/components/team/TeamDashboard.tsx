@@ -46,6 +46,8 @@ export function TeamDashboard() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"manager" | "staff">("staff");
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
+  const [sendingInvite, setSendingInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,7 +103,9 @@ export function TeamDashboard() {
 
   async function handleInvite(event: React.FormEvent) {
     event.preventDefault();
-    if (!restaurantId || !canInvite) return;
+    if (!restaurantId || !canInvite || sendingInvite) return;
+    setSendingInvite(true);
+    setInviteNotice(null);
     try {
       const response = await fetch(`/api/restaurants/${restaurantId}/invites`, {
         method: "POST",
@@ -111,10 +115,23 @@ export function TeamDashboard() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Failed to create invite");
       setLastInviteUrl(payload.acceptUrl ?? null);
+      if (payload.emailSent) {
+        setInviteNotice(`Invite emailed to ${payload.invite?.email ?? inviteEmail}.`);
+        setError(null);
+      } else {
+        setInviteNotice(null);
+        setError(
+          typeof payload.emailError === "string"
+            ? payload.emailError
+            : "Invite was created, but the email was not sent.",
+        );
+      }
       setInviteEmail("");
       await loadTeam();
     } catch (err) {
       setError(getErrorMessage(err));
+    } finally {
+      setSendingInvite(false);
     }
   }
 
@@ -219,11 +236,15 @@ export function TeamDashboard() {
             </select>
             <button
               type="submit"
-              className="rounded-xl bg-pine-900 px-4 py-2.5 text-sm font-semibold text-white"
+              disabled={sendingInvite}
+              className="rounded-xl bg-pine-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
-              Send invite
+              {sendingInvite ? "Sending…" : "Send invite"}
             </button>
           </form>
+          {inviteNotice ? (
+            <p className="mt-3 text-sm text-pine-700">{inviteNotice}</p>
+          ) : null}
           {lastInviteUrl ? (
             <p className="mt-3 break-all text-xs text-pine-600">
               Invite link: <span className="font-mono">{lastInviteUrl}</span>

@@ -12,6 +12,7 @@ import {
   processNotificationRetries,
   sendTransactionalNotification,
 } from "@/lib/notification/service";
+import { notifyTeamInvite } from "@/lib/notification/dispatch";
 import { isChannelEnabledForType, createDefaultRestaurantPreferences } from "@/lib/notification/preferences";
 
 const RESTAURANT_ID = getDemoRestaurantId();
@@ -146,5 +147,29 @@ describe("notification service", () => {
 
     expect(logs.every((log) => log.channel === "email")).toBe(true);
     expect(demoSentMessages.some((msg) => msg.channel === "sms")).toBe(false);
+  });
+
+  it("sends a team invite email", async () => {
+    vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("RESEND_FROM_EMAIL", "");
+
+    const result = await notifyTeamInvite({
+      restaurantName: "Harbour Kitchen",
+      email: "teammate@example.com",
+      role: "staff",
+      acceptUrl: "https://example.com/auth/accept-invite?token=abc",
+      inviterName: "owner@harbour.test",
+    });
+
+    expect(result.sent).toBe(false);
+    expect(result.provider).toBe("demo");
+    expect(
+      demoSentMessages.some(
+        (msg) =>
+          msg.channel === "email" &&
+          msg.recipient === "teammate@example.com" &&
+          msg.body.includes("https://example.com/auth/accept-invite?token=abc"),
+      ),
+    ).toBe(true);
   });
 });

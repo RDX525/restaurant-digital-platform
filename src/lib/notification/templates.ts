@@ -62,6 +62,12 @@ const TEMPLATES: Record<NotificationType, NotificationTemplate> = {
       "Hi {{guestName}},\n\nYour reservation has been moved to {{reservationDate}} at {{reservationTime}} for {{guestCount}} guests.\n\n— {{restaurantName}}",
     smsBody: "{{restaurantName}}: Reservation moved to {{reservationDate}} {{reservationTime}}.",
   },
+  TEAM_INVITE: {
+    subject: "You're invited to join {{restaurantName}}",
+    emailBody:
+      "Hi,\n\n{{inviterName}} invited you to join {{restaurantName}} as {{role}}.\n\nAccept the invite by signing in with this email address:\n{{acceptUrl}}\n\nThis link expires in 7 days.\n\n— {{restaurantName}}",
+    smsBody: "{{restaurantName}}: You've been invited as {{role}}. Open {{acceptUrl}}",
+  },
 };
 
 function renderTemplate(template: string, variables: Record<string, string>): string {

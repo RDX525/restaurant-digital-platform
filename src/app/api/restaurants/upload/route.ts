@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     await guardRestaurantRoute(restaurantId, "website.manage");
 
-    if (typeof assetType !== "string" || !["logo", "hero"].includes(assetType)) {
+    if (assetType !== "logo" && assetType !== "hero") {
       return jsonError(new Error("assetType must be logo or hero"), 422);
     }
 
