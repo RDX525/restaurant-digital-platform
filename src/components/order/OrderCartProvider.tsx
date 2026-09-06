@@ -60,23 +60,17 @@ export function OrderCartProvider({
   restaurantSlug: string;
   children: React.ReactNode;
 }) {
-  const { session, loading: sessionLoading } = useTableSession();
-  const cartScope = sessionLoading
-    ? null
-    : session && session.restaurantSlug === restaurantSlug
+  const { session } = useTableSession();
+  // Prefer dine-in scope when a table session exists; otherwise use the web cart.
+  // Do not gate on session loading — that blocked add-to-cart and cleared the badge.
+  const cartScope =
+    session && session.restaurantSlug === restaurantSlug
       ? dineInCartScope(session.tableId, session.sessionId)
       : "web";
   const [items, setItems] = useState<CartLineItem[]>([]);
   const itemsRef = useRef<CartLineItem[]>([]);
 
   useEffect(() => {
-    if (cartScope === null) {
-      itemsRef.current = [];
-      setItems([]);
-      setCartItemsSnapshot([]);
-      return;
-    }
-
     const next = readCart(restaurantSlug, cartScope).items;
     itemsRef.current = next;
     setItems(next);
@@ -85,7 +79,6 @@ export function OrderCartProvider({
 
   const persist = useCallback(
     (updater: CartLineItem[] | ((current: CartLineItem[]) => CartLineItem[])) => {
-      if (cartScope === null) return;
       const nextItems = typeof updater === "function" ? updater(itemsRef.current) : updater;
       itemsRef.current = nextItems;
       writeCart(
@@ -145,7 +138,6 @@ export function OrderCartProvider({
   );
 
   const clearAll = useCallback(() => {
-    if (cartScope === null) return;
     itemsRef.current = [];
     clearCart(restaurantSlug, cartScope);
     setItems([]);

@@ -76,8 +76,16 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
       setCustomer((current) =>
         current.orderType === "dine_in" ? current : { ...current, orderType: "dine_in" },
       );
+      return;
     }
-  }, [isDineIn]);
+    if (!tableSessionLoading) {
+      setCustomer((current) =>
+        current.orderType === "dine_in"
+          ? { ...current, orderType: "pickup" }
+          : current,
+      );
+    }
+  }, [isDineIn, tableSessionLoading]);
 
   useEffect(() => {
     trackPageEvent(restaurant.slug, "CHECKOUT_STARTED", "/order");
@@ -535,7 +543,8 @@ function DetailsStep({
           <div className="info-banner mb-5 flex items-center gap-2">
             <UtensilsCrossed className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
-              Dine-in order for <strong>{tableLabel}</strong>. Your table is verified from the QR scan.
+              Dine-in at <strong>{tableLabel ?? "your table"}</strong>. Your table is verified from
+              the QR scan.
             </span>
           </div>
         ) : null}
@@ -588,7 +597,11 @@ function DetailsStep({
                 )}
               >
                 <p className="font-medium capitalize text-pine-900">
-                  {type === "dine_in" ? "Dine in" : type}
+                  {type === "dine_in"
+                    ? tableLabel
+                      ? `Dine in · ${tableLabel}`
+                      : "Dine in"
+                    : type}
                 </p>
                 <p className="mt-1 text-xs text-pine-500">
                   {type === "pickup"

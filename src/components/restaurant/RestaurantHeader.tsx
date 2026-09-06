@@ -215,7 +215,8 @@ function OrderCartLink({
       ? `Order, ${itemCount} ${itemCount === 1 ? "dish" : "dishes"}`
       : "Order";
 
-  const className = "btn-accent relative rounded-full px-3.5 py-2.5 text-[15px] sm:px-5";
+  const className =
+    "btn-accent relative overflow-visible rounded-full px-3.5 py-2.5 text-[15px] sm:px-5";
   const content = (
     <>
       <ShoppingBag className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
@@ -223,12 +224,12 @@ function OrderCartLink({
       {itemCount > 0 ? (
         <span
           className={cn(
-            "pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-pine-900",
+            "pointer-events-none absolute -right-1.5 -top-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-pine-900 shadow-soft ring-1 ring-pine-900/10",
             pop && "motion-cart-pop",
           )}
           aria-hidden="true"
         >
-          {itemCount}
+          {itemCount > 99 ? "99+" : itemCount}
         </span>
       ) : null}
     </>

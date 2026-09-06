@@ -474,6 +474,12 @@
     overflow: hidden;
   }
 
+  /* Cart badge sits outside the button; keep it visible */
+  .restaurant-site a.btn-accent.relative.overflow-visible,
+  .restaurant-site .btn-accent.overflow-visible {
+    overflow: visible;
+  }
+
   .restaurant-site .btn-primary,
   .restaurant-site .nav-gradient-active,
   .restaurant-site .checkout-step-active {
