@@ -13,7 +13,7 @@ export function ContactCard({ restaurant }: ContactCardProps) {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      <div className="rs-panel rounded-[1.8rem] bg-white/80 shadow-soft ring-1 ring-black/[0.04]">
+      <div className="rs-panel rounded-[1.8rem]">
         <p className="eyebrow">Contact</p>
         <h2 className="mt-2 font-display text-3xl tracking-tight text-pine-900">Get in touch</h2>
         <ul className="mt-6 space-y-4 text-sm text-pine-600">
@@ -60,14 +60,14 @@ export function ContactCard({ restaurant }: ContactCardProps) {
         />
       </div>
 
-      <div className="rs-panel rounded-[1.8rem] bg-white/80 shadow-soft ring-1 ring-black/[0.04]">
+      <div className="rs-panel rounded-[1.8rem]">
         <p className="eyebrow">Visit</p>
         <h2 className="mt-2 font-display text-3xl tracking-tight text-pine-900">Quick actions</h2>
         <div className="mt-6 flex flex-col gap-3">
           <RestaurantPathLink
             restaurant={restaurant}
             path={restaurant.reservation_url ?? "reservations"}
-            className="btn-primary rounded-2xl py-4"
+            className="btn-primary rounded-2xl py-4 text-[15px]"
           >
             Make a reservation
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -75,7 +75,7 @@ export function ContactCard({ restaurant }: ContactCardProps) {
           <RestaurantPathLink
             restaurant={restaurant}
             path={restaurant.order_url ?? "order"}
-            className="btn-accent rounded-2xl py-4"
+            className="btn-accent rounded-2xl py-4 text-[15px]"
           >
             Order online
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, CalendarDays, LogIn } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { RESTAURANT_NAV_ITEMS } from "@/lib/restaurant/nav";
 import { useOrderCartCount } from "@/components/order/OrderCartProvider";
+import { WebsiteVisitTracker } from "@/components/restaurant/WebsiteVisitTracker";
 import { cn } from "@/lib/utils";
-import { trackPageEvent } from "@/lib/analytics/client";
 import { getSiteUrl } from "@/lib/env/site-url";
 import {
   getRestaurantNavBase,
@@ -42,15 +42,12 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
     [pathname, restaurant.slug, useRootPaths],
   );
 
-  useEffect(() => {
-    trackPageEvent(restaurant.slug, "WEBSITE_VISIT", pathname);
-  }, [restaurant.slug, pathname]);
-
   return (
     <header
       className="rs-header sticky top-0 z-40 border-b"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
+      <WebsiteVisitTracker slug={restaurant.slug} />
       <div className="rs-page grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-3 sm:gap-4 sm:py-4 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
         <Link
           href={base || "/"}
@@ -63,7 +60,6 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
               alt={`${restaurant.name} logo`}
               width={44}
               height={44}
-              priority
               sizes="44px"
               className="h-11 w-11 shrink-0 rounded-full object-cover shadow-soft ring-1 ring-black/5"
             />
@@ -89,11 +85,12 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
             <Link
               key={item.href || "home"}
               href={item.href}
+              prefetch
               className={cn(
-                "inline-flex min-h-11 items-center rounded-full px-3 py-2 text-sm font-medium touch-manipulation transition-colors duration-150 xl:px-4",
+                "inline-flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium touch-manipulation transition duration-150 xl:px-4",
                 item.active
                   ? "rs-nav-active"
-                  : "text-pine-600 [@media(hover:hover)]:hover:bg-white/70 [@media(hover:hover)]:hover:text-pine-900",
+                  : "text-pine-600 [@media(hover:hover)]:hover:bg-white/55 [@media(hover:hover)]:hover:text-pine-900 [@media(hover:hover)]:hover:shadow-soft",
               )}
               aria-current={item.active ? "page" : undefined}
             >
@@ -106,14 +103,15 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
           <Link
             href={platformLoginHref}
             aria-label="Sign in"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-pine-600 transition [@media(hover:hover)]:hover:bg-white/70 [@media(hover:hover)]:hover:text-pine-900 sm:px-3"
+            className="btn-glass inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium sm:px-3.5"
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Sign in</span>
           </Link>
           <Link
             href={reservationHref}
-            className="btn-primary hidden rounded-full px-4 py-2.5 sm:inline-flex"
+            prefetch
+            className="btn-primary hidden rounded-full px-5 py-2.5 text-[15px] sm:inline-flex"
           >
             <CalendarDays className="mr-1.5 h-4 w-4" aria-hidden="true" />
             Reserve
@@ -130,6 +128,7 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
           <Link
             key={item.href || "home"}
             href={item.href}
+            prefetch
             className={cn(
               "inline-flex min-h-11 min-w-0 flex-1 basis-0 items-center justify-center rounded-full px-0.5 text-center text-[11px] font-medium leading-tight touch-manipulation sm:px-3 sm:text-sm",
               item.active ? "rs-nav-active" : "text-pine-700",
@@ -152,25 +151,36 @@ function OrderCartLink({
   useRootPaths: boolean;
 }) {
   const itemCount = useOrderCartCount();
+  const [pop, setPop] = useState(false);
   const orderIsExternal =
     restaurant.order_url?.startsWith("http://") || restaurant.order_url?.startsWith("https://");
   const orderHref = orderIsExternal
     ? restaurant.order_url!
     : getRestaurantNavHref(restaurant.slug, "order", useRootPaths);
 
+  useEffect(() => {
+    if (itemCount <= 0) return;
+    setPop(true);
+    const timer = window.setTimeout(() => setPop(false), 340);
+    return () => window.clearTimeout(timer);
+  }, [itemCount]);
+
   const label =
     itemCount > 0
       ? `Order, ${itemCount} ${itemCount === 1 ? "dish" : "dishes"}`
       : "Order";
 
-  const className = "btn-accent relative rounded-full px-2.5 py-2.5 sm:px-4";
+  const className = "btn-accent relative rounded-full px-3.5 py-2.5 text-[15px] sm:px-5";
   const content = (
     <>
       <ShoppingBag className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
       <span className="hidden sm:inline">Order</span>
       {itemCount > 0 ? (
         <span
-          className="pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-pine-900"
+          className={cn(
+            "pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-pine-900",
+            pop && "motion-cart-pop",
+          )}
           aria-hidden="true"
         >
           {itemCount}
@@ -188,7 +198,7 @@ function OrderCartLink({
   }
 
   return (
-    <Link href={orderHref} aria-label={label} className={className}>
+    <Link href={orderHref} aria-label={label} prefetch className={className}>
       {content}
     </Link>
   );

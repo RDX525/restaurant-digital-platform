@@ -5,6 +5,7 @@ import { GoogleMap } from "@/components/restaurant/GoogleMap";
 import { OpeningHours } from "@/components/restaurant/OpeningHours";
 import { StructuredData } from "@/components/restaurant/StructuredData";
 import { PageHeader } from "@/components/restaurant/PageHeader";
+import { MotionReveal } from "@/components/motion/MotionReveal";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
 export const revalidate = 60;
@@ -37,10 +38,16 @@ export default async function ContactPage({ params }: RestaurantPageProps) {
         description="Visit us, call ahead, or send a message."
       />
       <div className="rs-page rs-page-body space-y-12">
-        <ContactCard restaurant={restaurant} />
+        <MotionReveal>
+          <ContactCard restaurant={restaurant} />
+        </MotionReveal>
         <div className="grid gap-12 lg:grid-cols-2">
-          <OpeningHours restaurant={restaurant} />
-          <GoogleMap restaurant={restaurant} />
+          <MotionReveal>
+            <OpeningHours restaurant={restaurant} />
+          </MotionReveal>
+          <MotionReveal delayMs={70} preset="fade-scale">
+            <GoogleMap restaurant={restaurant} />
+          </MotionReveal>
         </div>
       </div>
     </>

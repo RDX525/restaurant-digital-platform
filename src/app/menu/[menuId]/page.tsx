@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MenuPreview } from "@/components/menu/MenuPreview";
-import { PublicMenuHeader } from "@/components/menu/PublicMenuView";
+import { PublicMenuHeader } from "@/components/menu/PublicMenuHeader";
 import { publicRestaurantMenuPath } from "@/lib/cache/public-site";
 import { loadPublicMenuById } from "@/lib/menu/data";
 import { loadRestaurantById } from "@/lib/restaurant/data";
@@ -10,7 +10,7 @@ type PageProps = {
   params: Promise<{ menuId: string }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function PublicMenuPage({ params }: PageProps) {
   const { menuId } = await params;

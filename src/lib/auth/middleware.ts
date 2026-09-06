@@ -3,6 +3,17 @@ import type { NextRequest } from "next/server";
 import { isDemoAuthEnabled } from "@/lib/auth/demo";
 import { DEMO_SESSION_COOKIE, isDemoSession } from "./session";
 
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies
+    .getAll()
+    .some(
+      (cookie) =>
+        cookie.name.includes("-auth-token") ||
+        cookie.name.startsWith("sb-") ||
+        cookie.name.includes("supabase"),
+    );
+}
+
 export async function getAuthState(request: NextRequest) {
   const demoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
   const hasDemoSession =
@@ -13,6 +24,11 @@ export async function getAuthState(request: NextRequest) {
 
   if (!url || !key) {
     return { isAuthenticated: hasDemoSession, hasDemoSession, user: null };
+  }
+
+  // Skip network auth lookup when the browser has no session cookies (landing TTFB).
+  if (!hasDemoSession && !hasSupabaseAuthCookie(request)) {
+    return { isAuthenticated: false, hasDemoSession: false, user: null };
   }
 
   const supabase = createServerClient(url, key, {

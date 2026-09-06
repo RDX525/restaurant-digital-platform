@@ -1,19 +1,16 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { Phone } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { RESTAURANT_NAV_ITEMS } from "@/lib/restaurant/nav";
-import { getRestaurantNavHref, restaurantUsesRootPaths } from "@/lib/restaurant/routing";
+import { getRestaurantNavHref } from "@/lib/restaurant/routing";
+import { getRequestRestaurantNav } from "@/lib/restaurant/request-nav";
 import { formatRestaurantLocation } from "@/lib/restaurant/theme";
 import { RestaurantSocialLinks } from "@/components/restaurant/RestaurantSocialLinks";
-import { usePathname } from "next/navigation";
 import { getSiteUrl } from "@/lib/env/site-url";
 
-export function RestaurantFooter({ restaurant }: { restaurant: PublicRestaurant }) {
-  const pathname = usePathname();
-  const useRootPaths = restaurantUsesRootPaths(pathname, restaurant.slug);
+export async function RestaurantFooter({ restaurant }: { restaurant: PublicRestaurant }) {
+  const { useRootPaths } = await getRequestRestaurantNav(restaurant.slug);
   const platformLoginHref = useRootPaths ? `${getSiteUrl()}/login` : "/login";
   const location = formatRestaurantLocation(restaurant);
 

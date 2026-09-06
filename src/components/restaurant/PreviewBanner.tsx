@@ -1,13 +1,9 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
+import { headers } from "next/headers";
 import { Eye } from "lucide-react";
 
-export function PreviewBanner() {
-  const searchParams = useSearchParams();
-  const preview =
-    searchParams.get("preview") === "1" ||
-    searchParams.get("preview") === "true";
+export async function PreviewBanner() {
+  const headerStore = await headers();
+  const preview = headerStore.get("x-restaurant-preview") === "1";
 
   if (!preview) return null;
 

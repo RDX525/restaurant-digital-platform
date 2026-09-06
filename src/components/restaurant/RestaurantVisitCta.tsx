@@ -4,16 +4,20 @@ import { RestaurantPathLink } from "@/components/restaurant/RestaurantPathLink";
 
 export function RestaurantVisitCta({ restaurant }: { restaurant: PublicRestaurant }) {
   return (
-    <section className="rs-panel relative overflow-hidden rounded-[2rem] text-white sm:py-12">
+    <section className="rs-cta relative overflow-hidden rounded-[2rem] p-6 text-white sm:p-10 sm:py-12">
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(135deg, rgb(var(--rs-primary)) 0%, rgb(var(--rs-secondary)) 100%)`,
+          background: `linear-gradient(135deg, rgb(var(--rs-primary)) 0%, rgb(var(--rs-secondary)) 55%, color-mix(in srgb, rgb(var(--rs-primary)) 70%, black) 100%)`,
         }}
         aria-hidden="true"
       />
       <div
-        className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10"
+        className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-[rgb(var(--rs-accent)/0.25)] blur-2xl"
         aria-hidden="true"
       />
       <div className="relative max-w-2xl">
@@ -31,7 +35,7 @@ export function RestaurantVisitCta({ restaurant }: { restaurant: PublicRestauran
           <RestaurantPathLink
             restaurant={restaurant}
             path={restaurant.reservation_url ?? "reservations"}
-            className="btn-accent rounded-full px-6 py-3.5"
+            className="btn-accent rounded-full px-7 py-3.5 text-[15px]"
           >
             <CalendarDays className="mr-2 h-4 w-4" aria-hidden="true" />
             Book a table
@@ -39,7 +43,7 @@ export function RestaurantVisitCta({ restaurant }: { restaurant: PublicRestauran
           <RestaurantPathLink
             restaurant={restaurant}
             path={restaurant.order_url ?? "order"}
-            className="inline-flex min-h-11 items-center rounded-full border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white transition [@media(hover:hover)]:hover:bg-white/20"
+            className="btn-glass-dark inline-flex min-h-11 items-center rounded-full px-7 py-3.5 text-[15px] font-semibold"
           >
             <ShoppingBag className="mr-2 h-4 w-4" aria-hidden="true" />
             Order online

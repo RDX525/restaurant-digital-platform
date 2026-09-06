@@ -140,8 +140,8 @@ export function ReservationForm({ restaurant }: ReservationFormProps) {
 
   if (submitted) {
     return (
-      <div className="platform-card p-10 text-center">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-gold-500" />
+      <div className="platform-card motion-reveal motion-reveal--armed is-inview motion-reveal--fade-scale p-10 text-center">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-gold-500 motion-cart-pop" />
         <h2 className="mt-4 font-display text-2xl text-pine-900">Booking request received</h2>
         <p className="mt-2 text-sm text-pine-600">
           Thanks {submitted.name}. We will confirm your table for {submitted.guests} guests on{" "}

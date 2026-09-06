@@ -150,6 +150,10 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-restaurant-slug", slug);
   requestHeaders.set("x-restaurant-domain", host);
+  const preview = request.nextUrl.searchParams.get("preview");
+  if (preview === "1" || preview === "true") {
+    requestHeaders.set("x-restaurant-preview", "1");
+  }
 
   return NextResponse.rewrite(rewriteUrl, {
     request: { headers: requestHeaders },

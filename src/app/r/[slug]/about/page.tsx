@@ -4,6 +4,7 @@ import { buildRestaurantMetadata } from "@/lib/restaurant/seo";
 import { StructuredData } from "@/components/restaurant/StructuredData";
 import { PageHeader } from "@/components/restaurant/PageHeader";
 import { RestaurantVisitCta } from "@/components/restaurant/RestaurantVisitCta";
+import { MotionReveal } from "@/components/motion/MotionReveal";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 import { restaurantAboutImage } from "@/lib/restaurant/theme";
 
@@ -39,9 +40,9 @@ export default async function AboutPage({ params }: RestaurantPageProps) {
         description={restaurant.tagline ?? undefined}
       />
       <div className="rs-page rs-page-body space-y-16">
-        <div className="grid items-stretch gap-10 lg:grid-cols-[1.05fr_1fr]">
+        <MotionReveal className="grid items-stretch gap-10 lg:grid-cols-[1.05fr_1fr]">
           {cover ? (
-            <figure className="rs-media relative aspect-[4/5] min-h-72 overflow-hidden ring-1 ring-[rgb(var(--rs-accent)/0.28)] sm:min-h-[28rem] lg:aspect-auto lg:min-h-[38rem]">
+            <figure className="rs-media motion-media-zoom relative aspect-[4/5] min-h-72 overflow-hidden ring-1 ring-[rgb(var(--rs-accent)/0.28)] sm:min-h-[28rem] lg:aspect-auto lg:min-h-[38rem]">
               <Image
                 src={cover}
                 alt={coverCaption ?? `${restaurant.name} kitchen`}
@@ -59,7 +60,7 @@ export default async function AboutPage({ params }: RestaurantPageProps) {
             </figure>
           ) : null}
           {restaurant.about_text ? (
-            <div className="rs-panel rounded-[2rem] bg-white/75 shadow-soft ring-1 ring-black/[0.04]">
+            <div className="rs-panel rounded-[2rem]">
               <p className="prose-restaurant whitespace-pre-line">{restaurant.about_text}</p>
             </div>
           ) : (
@@ -67,8 +68,10 @@ export default async function AboutPage({ params }: RestaurantPageProps) {
               The story is still being written. Check back soon.
             </div>
           )}
-        </div>
-        <RestaurantVisitCta restaurant={restaurant} />
+        </MotionReveal>
+        <MotionReveal preset="fade-scale" delayMs={60}>
+          <RestaurantVisitCta restaurant={restaurant} />
+        </MotionReveal>
       </div>
     </>
   );

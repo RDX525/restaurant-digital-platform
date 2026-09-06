@@ -15,7 +15,10 @@ export function RestaurantShell({ restaurant, children }: RestaurantShellProps) 
   return (
     <TableSessionProvider>
       <OrderCartProvider restaurantSlug={restaurant.slug}>
-        <div className="restaurant-site min-h-dvh w-full min-w-0 max-w-full" style={restaurantThemeStyle(restaurant)}>
+        <div
+          className="restaurant-site restaurant-site--motion min-h-dvh w-full min-w-0 max-w-full"
+          style={restaurantThemeStyle(restaurant)}
+        >
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"

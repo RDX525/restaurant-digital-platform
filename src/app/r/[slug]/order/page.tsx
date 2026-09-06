@@ -3,7 +3,7 @@ import { loadPublicMenuForRestaurant } from "@/lib/menu/data";
 import { buildRestaurantMetadata } from "@/lib/restaurant/seo";
 import { StructuredData } from "@/components/restaurant/StructuredData";
 import { PageHeader } from "@/components/restaurant/PageHeader";
-import { OrderCheckout } from "@/components/order/OrderCheckout";
+import { OrderCheckoutLazy } from "@/components/order/OrderCheckoutLazy";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
 
 export const revalidate = 60;
@@ -36,7 +36,7 @@ export default async function OrderPage({ params }: RestaurantPageProps) {
         title="Your order"
         description={`Add items from the menu, checkout, and pay securely.`}
       />
-      <OrderCheckout restaurant={restaurant} menu={menu} />
+      <OrderCheckoutLazy restaurant={restaurant} menu={menu} />
     </>
   );
 }

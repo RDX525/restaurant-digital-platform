@@ -17,13 +17,13 @@ export function OpeningHours({ restaurant }: OpeningHoursProps) {
       <p className="mt-1 text-sm text-pine-500">
         {restaurant.country ? `${restaurant.country} local time` : "Local time"}
       </p>
-      <dl className="mt-6 divide-y divide-black/5 overflow-hidden rounded-[1.8rem] bg-white/80 shadow-soft ring-1 ring-black/[0.04]">
+      <dl className="rs-panel mt-6 divide-y divide-black/5 overflow-hidden rounded-[1.8rem] !p-0">
         {DAYS_ORDER.map((day) => {
           const dayHours = hours[day];
           return (
             <div
               key={day}
-              className="flex items-center justify-between gap-4 px-5 py-4 text-sm [@media(hover:hover)]:hover:bg-[rgb(var(--rs-primary)/0.03)]"
+              className="flex items-center justify-between gap-4 px-5 py-4 text-sm [@media(hover:hover)]:hover:bg-[rgb(var(--rs-primary)/0.04)]"
             >
               <dt className="font-medium text-pine-800">{DAY_LABELS[day]}</dt>
               <dd className="text-pine-600">

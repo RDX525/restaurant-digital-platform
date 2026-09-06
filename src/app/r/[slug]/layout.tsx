@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RestaurantShell } from "@/components/restaurant/RestaurantShell";
@@ -29,9 +28,7 @@ export default async function RestaurantLayout({
   return (
     <>
       <StructuredData restaurant={restaurant} />
-      <Suspense fallback={null}>
-        <PreviewBanner />
-      </Suspense>
+      <PreviewBanner />
       <RestaurantShell restaurant={restaurant}>{children}</RestaurantShell>
     </>
   );

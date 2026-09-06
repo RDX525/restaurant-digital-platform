@@ -100,11 +100,11 @@ function HeroBackground({ animated = true }: { animated?: boolean }) {
       />
       <div className="grain pointer-events-none absolute inset-0 opacity-35" aria-hidden="true" />
       <div
-        className={`pointer-events-none absolute -right-20 top-10 h-[480px] w-[480px] rounded-full bg-gold-500/15 ${animated ? "blur-3xl animate-glow-pulse" : "blur-xl"}`}
+        className={`pointer-events-none absolute -right-20 top-10 h-[480px] w-[480px] rounded-full bg-gold-500/15 ${animated ? "blur-2xl animate-glow-pulse" : "blur-xl"}`}
         aria-hidden="true"
       />
       <div
-        className={`pointer-events-none absolute -left-32 bottom-0 h-[420px] w-[420px] rounded-full bg-pine-500/25 ${animated ? "blur-3xl" : "blur-xl"}`}
+        className={`pointer-events-none absolute -left-32 bottom-0 h-[420px] w-[420px] rounded-full bg-pine-500/25 ${animated ? "blur-2xl" : "blur-xl"}`}
         aria-hidden="true"
       />
       <div
@@ -183,7 +183,7 @@ function HeroActions({ compact = false }: { compact?: boolean }) {
     <div className={`flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center ${compact ? "mt-5" : "mt-7"}`}>
       <Link
         href="/r/harbour-kitchen"
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 text-sm font-semibold text-pine-950 shadow-glow transition hover:brightness-105 active:scale-[0.98] touch-manipulation"
+        className="motion-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 text-sm font-semibold text-pine-950 shadow-glow transition hover:brightness-105 touch-manipulation"
       >
         Explore live demo
         <ArrowRight className="h-4 w-4" aria-hidden="true" />

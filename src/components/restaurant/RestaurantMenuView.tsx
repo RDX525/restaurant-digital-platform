@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, startTransition, useMemo, useState } from "react";
 import Image from "next/image";
 import type { FullMenu, MenuItemWithModifiers } from "@/lib/menu/types";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
@@ -12,6 +12,7 @@ import {
 } from "@/lib/menu/diet";
 import { AddToCartButton } from "@/components/order/AddToCartButton";
 import { MenuPageTracker } from "@/components/restaurant/MenuPageTracker";
+import { MotionReveal } from "@/components/motion/MotionReveal";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface RestaurantMenuViewProps {
@@ -74,7 +75,7 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
                   <button
                     key={option.label}
                     type="button"
-                    onClick={() => setFilter(option.id)}
+                    onClick={() => startTransition(() => setFilter(option.id))}
                     className={cn("rs-chip", active && "rs-chip-active")}
                     aria-pressed={active}
                   >
@@ -89,7 +90,7 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
                   <button
                     key={category.id}
                     type="button"
-                    onClick={() => setFilter(next)}
+                    onClick={() => startTransition(() => setFilter(next))}
                     className={cn("rs-chip", active && "rs-chip-active")}
                     aria-pressed={active}
                   >
@@ -117,7 +118,12 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
           </div>
         ) : (
           visibleMenu.categories.map((category) => (
-            <section key={category.id} aria-labelledby={`cat-${category.id}`}>
+            <MotionReveal
+              key={category.id}
+              as="section"
+              aria-labelledby={`cat-${category.id}`}
+              eager
+            >
               {filter.kind === "diet" && isDietCategoryName(category.name) ? (
                 <h2 id={`cat-${category.id}`} className="sr-only">
                   {category.name}
@@ -146,11 +152,16 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
                     : "mt-6 grid gap-4"
                 }
               >
-                {category.items.map((item) => (
-                  <MenuItemRow key={item.id} item={item} restaurant={restaurant} />
+                {category.items.map((item, itemIndex) => (
+                  <MenuItemRow
+                    key={item.id}
+                    item={item}
+                    restaurant={restaurant}
+                    index={itemIndex}
+                  />
                 ))}
               </ul>
-            </section>
+            </MotionReveal>
           ))
         )}
 
@@ -163,22 +174,27 @@ export function RestaurantMenuView({ menu, restaurant }: RestaurantMenuViewProps
 const MenuItemRow = memo(function MenuItemRow({
   item,
   restaurant,
+  index = 0,
 }: {
   item: MenuItemWithModifiers;
   restaurant: PublicRestaurant;
+  index?: number;
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const showPhoto = Boolean(item.photo_url) && !photoFailed;
 
   return (
-    <li className="menu-item-row group grid gap-5 rounded-[1.6rem] bg-white/80 p-4 shadow-soft ring-1 ring-black/[0.04] sm:grid-cols-[auto_1fr] sm:p-5">
+    <li
+      className="menu-item-row group grid gap-5 rounded-[1.6rem] p-4 sm:grid-cols-[auto_1fr] sm:p-5"
+      style={{ transitionDelay: `${Math.min(index, 8) * 40}ms` }}
+    >
       <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-[rgb(var(--rs-primary)/0.06)] sm:h-32 sm:w-32">
         {showPhoto ? (
           <Image
             src={item.photo_url as string}
             alt={item.name}
             fill
-            className="object-cover [@media(hover:hover)]:transition [@media(hover:hover)]:duration-500 [@media(hover:hover)]:group-hover:scale-105"
+            className="object-cover"
             sizes="(max-width: 640px) 320px, 128px"
             quality={75}
             loading="lazy"

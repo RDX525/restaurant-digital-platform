@@ -5,6 +5,7 @@ import { OpeningHours } from "@/components/restaurant/OpeningHours";
 import { GalleryGrid } from "@/components/restaurant/GalleryGrid";
 import { RestaurantVisitCta } from "@/components/restaurant/RestaurantVisitCta";
 import { RestaurantPathLink } from "@/components/restaurant/RestaurantPathLink";
+import { MotionReveal } from "@/components/motion/MotionReveal";
 import { getPublicRestaurant } from "@/lib/restaurant/page-data";
 import { buildRestaurantMetadata } from "@/lib/restaurant/seo";
 import type { RestaurantPageProps } from "@/lib/restaurant/page-data";
@@ -31,7 +32,8 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
 
       <div className="rs-page rs-home-stack">
         {restaurant.about_text ? (
-          <section
+          <MotionReveal
+            as="section"
             aria-labelledby="intro-heading"
             className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]"
           >
@@ -54,7 +56,7 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
               </RestaurantPathLink>
             </div>
             {storyImage ? (
-              <div className="rs-media relative aspect-[4/5] min-h-72">
+              <div className="rs-media motion-media-zoom relative aspect-[4/5] min-h-72">
                 <Image
                   src={storyImage}
                   alt=""
@@ -64,10 +66,10 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
                 />
               </div>
             ) : null}
-          </section>
+          </MotionReveal>
         ) : null}
 
-        <section aria-labelledby="gallery-preview-heading">
+        <MotionReveal as="section" aria-labelledby="gallery-preview-heading">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="eyebrow">Gallery</p>
@@ -88,15 +90,18 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
             <GalleryGrid
               images={restaurant.gallery.slice(0, 5)}
               restaurantName={restaurant.name}
-              priorityFirst
               featured
             />
           </div>
-        </section>
+        </MotionReveal>
 
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <OpeningHours restaurant={restaurant} />
-          <RestaurantVisitCta restaurant={restaurant} />
+          <MotionReveal>
+            <OpeningHours restaurant={restaurant} />
+          </MotionReveal>
+          <MotionReveal delayMs={80} preset="fade-scale">
+            <RestaurantVisitCta restaurant={restaurant} />
+          </MotionReveal>
         </div>
       </div>
     </>

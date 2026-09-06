@@ -231,7 +231,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
           {mobileNavOpen ? (
             <nav
               id="dashboard-mobile-nav"
-              className="max-h-[min(70dvh,32rem)] overflow-y-auto border-t border-pine-900/5 bg-white/95 px-3 py-3"
+              className="max-h-[min(70dvh,32rem)] overflow-y-auto border-t border-pine-900/5 bg-white/95 px-3 py-3 motion-reveal motion-reveal--armed is-inview motion-reveal--fade-up"
               aria-label="Dashboard"
             >
               {visibleNav.map(({ href, label, icon, description }) => (
