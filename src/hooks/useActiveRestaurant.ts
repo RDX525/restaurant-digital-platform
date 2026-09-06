@@ -16,6 +16,11 @@ const EMPTY_PERMISSIONS: string[] = [];
 let cachedRestaurant: ActiveRestaurant | null = null;
 let inflight: Promise<ActiveRestaurant> | null = null;
 
+/** Seed the module cache from a server-resolved restaurant (dashboard layout). */
+export function seedActiveRestaurantCache(restaurant: ActiveRestaurant) {
+  cachedRestaurant = restaurant;
+}
+
 async function fetchActiveRestaurant(force: boolean): Promise<ActiveRestaurant> {
   if (!force && cachedRestaurant) return cachedRestaurant;
   if (!force && inflight) return inflight;
@@ -36,9 +41,15 @@ async function fetchActiveRestaurant(force: boolean): Promise<ActiveRestaurant> 
   return inflight;
 }
 
-export function useActiveRestaurant() {
-  const [restaurant, setRestaurant] = useState<ActiveRestaurant | null>(cachedRestaurant);
-  const [loading, setLoading] = useState(!cachedRestaurant);
+export function useActiveRestaurant(initial?: ActiveRestaurant | null) {
+  if (initial) {
+    seedActiveRestaurantCache(initial);
+  }
+
+  const [restaurant, setRestaurant] = useState<ActiveRestaurant | null>(
+    () => cachedRestaurant ?? initial ?? null,
+  );
+  const [loading, setLoading] = useState(() => !(cachedRestaurant ?? initial));
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (force = false) => {

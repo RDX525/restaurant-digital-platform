@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { jsonError, jsonOk } from "@/lib/api";
 import { guardRestaurantRoute } from "@/lib/auth/guards";
 import { resolveRestaurantIdForMenuItem } from "@/lib/menu/authorization";
+import { revalidatePublicSiteForMenuItem } from "@/lib/menu/revalidate-public";
 import { menuImageObjectPath } from "@/lib/menu/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    await revalidatePublicSiteForMenuItem(itemId);
     return jsonOk({ photo_url: publicData.publicUrl, item: data });
   } catch (error) {
     return jsonError(error, 500);

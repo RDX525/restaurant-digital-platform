@@ -14,7 +14,16 @@ export function DashboardResourceGate({
   children: ReactNode;
 }) {
   if (loading) {
-    return <p className="text-sm text-pine-600">Loading your restaurant…</p>;
+    return (
+      <div className="space-y-4" aria-busy="true" aria-label="Loading restaurant">
+        <div className="skeleton h-4 w-40" />
+        <div className="skeleton h-10 w-64 max-w-full" />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="skeleton h-36 rounded-3xl" />
+          <div className="skeleton h-36 rounded-3xl" />
+        </div>
+      </div>
+    );
   }
 
   if (error || !ready) {

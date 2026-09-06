@@ -188,21 +188,21 @@ const MenuItemRow = memo(function MenuItemRow({
       className="menu-item-row group grid gap-5 rounded-[1.6rem] p-4 sm:grid-cols-[auto_1fr] sm:p-5"
       style={{ transitionDelay: `${Math.min(index, 8) * 40}ms` }}
     >
-      <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-[rgb(var(--rs-primary)/0.06)] sm:h-32 sm:w-32">
+      <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-[rgb(var(--rs-primary)/0.06)] sm:h-36 sm:w-36">
         {showPhoto ? (
           <Image
             src={item.photo_url as string}
             alt={item.name}
             fill
             className="object-cover"
-            sizes="(max-width: 640px) 320px, 128px"
+            sizes="(max-width: 640px) 320px, 144px"
             quality={75}
             loading="lazy"
             onError={() => setPhotoFailed(true)}
           />
         ) : (
           <div
-            className="flex h-full items-center justify-center font-display text-2xl"
+            className="flex h-full items-center justify-center font-display text-3xl"
             style={{ color: "rgb(var(--rs-primary) / 0.35)" }}
             aria-hidden="true"
           >
@@ -214,18 +214,20 @@ const MenuItemRow = memo(function MenuItemRow({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-medium text-pine-900">{item.name}</h3>
+              <h3 className="font-display text-xl tracking-tight text-pine-900 sm:text-[1.35rem]">
+                {item.name}
+              </h3>
               {item.is_popular ? <span className="badge-popular">Popular</span> : null}
               {item.is_recommended ? (
                 <span className="badge-recommended">Chef’s pick</span>
               ) : null}
             </div>
             {item.description ? (
-              <p className="mt-1.5 text-sm leading-relaxed text-pine-600">{item.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-pine-600">{item.description}</p>
             ) : null}
           </div>
           <p
-            className="shrink-0 font-display text-xl"
+            className="shrink-0 font-display text-2xl tracking-tight"
             style={{ color: "rgb(var(--rs-primary))" }}
           >
             {formatPrice(item.price)}

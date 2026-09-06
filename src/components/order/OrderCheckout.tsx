@@ -45,7 +45,7 @@ interface OrderCheckoutProps {
 export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
   const { homeHref, menuHref, ordersHref } = useRestaurantNav(restaurant.slug);
   const { items, updateQuantity, removeItem, clearAll } = useOrderCart();
-  const { session: tableSession } = useTableSession();
+  const { session: tableSession, loading: tableSessionLoading } = useTableSession();
   const isDineIn = Boolean(
     tableSession && tableSession.restaurantSlug === restaurant.slug,
   );
@@ -252,6 +252,7 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
           restaurant={restaurant}
           totals={totals}
           isDineIn={isDineIn}
+          tableSessionLoading={tableSessionLoading}
           tableLabel={tableSession?.tableLabel}
           onChange={setCustomer}
           onBack={() => setStep("cart")}
@@ -491,6 +492,7 @@ function DetailsStep({
   restaurant,
   totals,
   isDineIn,
+  tableSessionLoading,
   tableLabel,
   onChange,
   onBack,
@@ -502,6 +504,7 @@ function DetailsStep({
   restaurant: PublicRestaurant;
   totals: ReturnType<typeof calculateCartTotals>;
   isDineIn: boolean;
+  tableSessionLoading: boolean;
   tableLabel?: string;
   onChange: (value: CustomerDetails) => void;
   onBack: () => void;
@@ -514,9 +517,11 @@ function DetailsStep({
     address?: string;
   };
 }) {
-  const orderTypes = isDineIn
-    ? (["dine_in"] as const)
-    : (["pickup", "delivery"] as const);
+  const orderTypes = tableSessionLoading
+    ? ([] as const)
+    : isDineIn
+      ? (["dine_in"] as const)
+      : (["pickup", "delivery"] as const);
 
   return (
     <div className="space-y-6">
@@ -566,6 +571,9 @@ function DetailsStep({
 
         <div className="mt-6">
           <p className="label">Order type</p>
+          {tableSessionLoading ? (
+            <p className="mt-2 text-sm text-pine-500">Checking table session…</p>
+          ) : (
           <div className={cn("grid gap-3", orderTypes.length > 1 ? "sm:grid-cols-2" : "max-w-sm")}>
             {orderTypes.map((type) => (
               <button
@@ -592,6 +600,7 @@ function DetailsStep({
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {customer.orderType === "delivery" ? (

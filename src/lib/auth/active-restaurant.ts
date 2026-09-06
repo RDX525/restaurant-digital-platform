@@ -59,7 +59,7 @@ export async function getActiveRestaurantForAuth(
   }
 
   const restaurantId = await resolveActiveRestaurantId(auth);
-  const restaurant = await loadRestaurantById(restaurantId, { galleryLimit: 50 });
+  const restaurant = await loadRestaurantById(restaurantId, { galleryLimit: 0 });
 
   if (!restaurant) {
     throw new NotFoundError("Restaurant not found.");

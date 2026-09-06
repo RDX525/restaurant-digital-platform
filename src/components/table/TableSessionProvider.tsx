@@ -8,7 +8,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { browserHasTableSessionCookie } from "@/lib/table/session";
 
 export interface TableSessionInfo {
   active: true;
@@ -49,7 +48,9 @@ export function TableSessionProvider({
   children: React.ReactNode;
 }) {
   const [session, setSession] = useState<TableSessionInfo | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Always resolve via /api/table-session — the session cookie is httpOnly, so
+  // document.cookie cannot detect it.
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -71,14 +72,7 @@ export function TableSessionProvider({
   }, []);
 
   useEffect(() => {
-    if (!browserHasTableSessionCookie()) {
-      setSession(null);
-      setLoading(false);
-      return;
-    }
-
     const controller = new AbortController();
-    setLoading(true);
     void refresh(controller.signal);
     return () => {
       controller.abort();

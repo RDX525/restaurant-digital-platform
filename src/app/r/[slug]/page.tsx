@@ -35,20 +35,25 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
           <MotionReveal
             as="section"
             aria-labelledby="intro-heading"
-            className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]"
+            className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14"
           >
             <div>
               <p className="eyebrow">Our story</p>
-              <h2 id="intro-heading" className="section-title mt-3">
+              <h2 id="intro-heading" className="section-title mt-3 max-w-[16ch]">
                 A taste of {restaurant.name}
               </h2>
-              <p className="mt-6 text-lg leading-relaxed text-pine-700">
+              <div
+                className="mt-5 h-px w-14"
+                style={{ background: "rgb(var(--rs-accent))" }}
+                aria-hidden="true"
+              />
+              <p className="mt-6 text-lg leading-relaxed text-pine-700 sm:text-xl sm:leading-relaxed">
                 {restaurantStoryExcerpt(restaurant.about_text)}
               </p>
               <RestaurantPathLink
                 restaurant={restaurant}
                 path="about"
-                className="mt-7 inline-flex items-center gap-2 text-sm font-semibold underline-offset-4 transition hover:underline"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-semibold underline-offset-4 transition hover:underline"
                 style={{ color: "rgb(var(--rs-primary))" }}
               >
                 Read our full story
@@ -56,7 +61,7 @@ export default async function RestaurantHomePage({ params }: RestaurantPageProps
               </RestaurantPathLink>
             </div>
             {storyImage ? (
-              <div className="rs-media motion-media-zoom relative aspect-[4/5] min-h-72">
+              <div className="rs-media motion-media-zoom relative aspect-[4/5] min-h-80 lg:min-h-[28rem]">
                 <Image
                   src={storyImage}
                   alt=""

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CalendarDays, MapPin, ShoppingBag } from "lucide-react";
+import { CalendarDays, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { PublicRestaurant } from "@/lib/restaurant/types";
 import { formatRestaurantLocation } from "@/lib/restaurant/theme";
 import { RestaurantPathLink } from "@/components/restaurant/RestaurantPathLink";
@@ -12,7 +12,7 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
   const location = formatRestaurantLocation(restaurant);
 
   return (
-    <section className="relative min-h-[70svh] overflow-hidden sm:min-h-[82svh] lg:min-h-[88dvh]">
+    <section className="relative min-h-dvh overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         {restaurant.hero_image_url ? (
           <Image
@@ -27,53 +27,53 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
           <div
             className="motion-hero-media h-full w-full"
             style={{
-              background: `radial-gradient(circle at 20% 20%, rgb(var(--rs-accent) / 0.35), transparent 36%), linear-gradient(145deg, rgb(var(--rs-primary)) 0%, rgb(var(--rs-secondary)) 100%)`,
+              background: `radial-gradient(circle at 18% 22%, rgb(var(--rs-accent) / 0.4), transparent 38%), linear-gradient(145deg, rgb(var(--rs-primary)) 0%, rgb(var(--rs-secondary)) 100%)`,
             }}
             aria-hidden="true"
           />
         )}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/20"
+          className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/25"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgb(0_0_0/0.28)_100%)]"
           aria-hidden="true"
         />
       </div>
 
-      <div className="rs-page relative flex min-h-[62svh] flex-col justify-end pb-12 pt-16 text-white sm:min-h-[78svh] sm:pb-20 sm:pt-28 lg:min-h-[85dvh]">
-        <div className="motion-hero-copy">
-          {restaurant.logo_url ? (
-            <Image
-              src={restaurant.logo_url}
-              alt=""
-              width={80}
-              height={80}
-              className="mb-7 h-16 w-16 rounded-full object-cover shadow-elevated ring-1 ring-white/30 sm:h-20 sm:w-20"
-              sizes="80px"
-            />
-          ) : null}
-
+      <div className="rs-page relative flex min-h-dvh flex-col justify-end pb-14 pt-28 text-white sm:pb-20 sm:pt-32">
+        <div className="motion-hero-copy max-w-4xl">
           {location ? (
-            <p className="flex min-w-0 flex-wrap items-center gap-2 break-words text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 sm:tracking-[0.24em]">
-              <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/65 sm:tracking-[0.26em]">
               {location}
             </p>
           ) : null}
 
-          <h1 className="mt-4 max-w-4xl break-words font-display text-[clamp(2.35rem,11vw,3rem)] leading-[0.95] tracking-tight sm:text-7xl lg:text-8xl">
+          <h1 className="mt-4 max-w-[14ch] break-words font-display text-[clamp(2.75rem,12vw,5.5rem)] leading-[0.92] tracking-tight">
             {restaurant.name}
           </h1>
-          <div className="mt-6 h-px w-16 bg-[rgb(var(--rs-accent))]" aria-hidden="true" />
+
+          <div
+            className="mt-6 h-px w-20 bg-[rgb(var(--rs-accent))]"
+            aria-hidden="true"
+          />
 
           {restaurant.tagline ? (
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/86 sm:text-2xl">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/88 sm:text-xl sm:leading-relaxed">
               {restaurant.tagline}
             </p>
-          ) : null}
+          ) : (
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/88 sm:text-xl">
+              Seasonal plates, considered hospitality, and a table waiting for you.
+            </p>
+          )}
 
-          <div className="mt-8 flex w-full min-w-0 flex-wrap gap-3 sm:mt-10">
+          <div className="mt-9 flex w-full min-w-0 flex-wrap gap-3 sm:mt-11">
             <RestaurantPathLink
               restaurant={restaurant}
               path={restaurant.order_url ?? "order"}
-              className="btn-accent min-w-0 flex-1 basis-[calc(50%-0.4rem)] rounded-full px-5 py-3.5 text-[15px] sm:flex-none sm:basis-auto sm:px-7"
+              className="btn-accent min-w-0 flex-1 basis-[calc(50%-0.4rem)] rounded-full px-6 py-3.5 text-[15px] sm:flex-none sm:basis-auto sm:px-8"
             >
               <ShoppingBag className="mr-2 h-4 w-4" aria-hidden="true" />
               Order now
@@ -81,17 +81,18 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
             <RestaurantPathLink
               restaurant={restaurant}
               path={restaurant.reservation_url ?? "reservations"}
-              className="btn-primary min-w-0 flex-1 basis-[calc(50%-0.4rem)] rounded-full px-5 py-3.5 text-[15px] sm:flex-none sm:basis-auto sm:px-7"
+              className="btn-primary min-w-0 flex-1 basis-[calc(50%-0.4rem)] rounded-full px-6 py-3.5 text-[15px] sm:flex-none sm:basis-auto sm:px-8"
             >
               <CalendarDays className="mr-2 h-4 w-4" aria-hidden="true" />
-              Book a table
+              Reserve a table
             </RestaurantPathLink>
             <RestaurantPathLink
               restaurant={restaurant}
               path="menu"
               className="btn-glass-dark inline-flex min-h-11 w-full items-center justify-center rounded-full px-6 py-3.5 text-[15px] font-semibold sm:w-auto"
             >
-              View menu
+              <UtensilsCrossed className="mr-2 h-4 w-4" aria-hidden="true" />
+              Explore menu
             </RestaurantPathLink>
           </div>
         </div>

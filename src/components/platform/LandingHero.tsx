@@ -159,20 +159,20 @@ function HeroCopy({ compact }: { compact: boolean }) {
   return (
     <>
       <h1
-        className={`font-display leading-[1.05] tracking-tight ${
-          compact ? "mt-2 text-[2rem]" : "mt-1 text-4xl xl:text-[2.75rem]"
+        className={`font-display leading-[1.02] tracking-tight ${
+          compact ? "mt-2 text-[2.15rem]" : "mt-1 text-4xl xl:text-[3.15rem]"
         }`}
       >
         Your restaurant,{" "}
         <span className="text-gradient-gold italic">elevated</span> online
       </h1>
       <p
-        className={`mt-4 leading-relaxed text-pine-200/90 ${
+        className={`mt-5 max-w-xl leading-relaxed text-pine-200/90 ${
           compact ? "text-sm" : "text-base lg:text-lg"
         }`}
       >
-        Launch a guest experience that matches your venue — live menus, online ordering,
-        reservations, and a dashboard built for the pace of Aotearoa hospitality.
+        A guest experience that matches your venue — live menus, ordering, and reservations
+        built for the pace of Aotearoa hospitality.
       </p>
     </>
   );

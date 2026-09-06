@@ -21,7 +21,9 @@ export function PageHeader({
       <MotionReveal as="div" className="rs-page-header-inner relative" eager>
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
         <div className="divider-gold mt-5" aria-hidden="true" />
-        <h1 className="section-title mt-6 max-w-3xl break-words">{title}</h1>
+        <h1 className="section-title mt-6 max-w-3xl break-words text-[clamp(2.25rem,6vw,3.5rem)]">
+          {title}
+        </h1>
         {description ? (
           <p id={descriptionId} className="section-subtitle scroll-mt-28 text-pretty">
             {description}

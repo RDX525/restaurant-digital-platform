@@ -41,6 +41,26 @@ export const menuItemSchema = z.object({
   sort_order: z.number().int().min(0).default(0),
 });
 
+/** Sparse patch schema — no defaults, so omitted fields are left unchanged. */
+export const menuItemPatchSchema = z
+  .object({
+    name: z.string().trim().min(1, "Item name is required").max(120).optional(),
+    description: z.string().trim().max(1000).optional().nullable(),
+    price: z.coerce.number().min(0, "Price must be zero or greater").optional(),
+    photo_url: z.string().url().optional().nullable().or(z.literal("")),
+    ingredients: z.array(z.string().trim().min(1)).optional(),
+    allergens: z.array(z.string().trim().min(1)).optional(),
+    dietary_info: z.array(z.string().trim().min(1)).optional(),
+    is_available: z.boolean().optional(),
+    is_sold_out: z.boolean().optional(),
+    is_popular: z.boolean().optional(),
+    is_recommended: z.boolean().optional(),
+    sort_order: z.number().int().min(0).optional(),
+  })
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    message: "At least one item field is required",
+  });
+
 export const modifierGroupBaseSchema = z.object({
   name: z.string().trim().min(1, "Group name is required").max(120),
   is_required: z.boolean().default(false),

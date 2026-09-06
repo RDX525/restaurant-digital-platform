@@ -5,6 +5,7 @@ import { resetDemoIntelligenceStore, loadDemoInsights } from "@/lib/intelligence
 import { resetDemoOrderStore, loadDemoOrders } from "@/lib/order/demo-store";
 import { resetDemoReservationStore, loadDemoReservations } from "@/lib/reservation/demo-store";
 import { resetDemoTableStore } from "@/lib/table/demo-store";
+import { resetDemoMenuStore } from "@/lib/menu/demo-store";
 import {
   buildHarbourKitchenAnalyticsEvents,
   buildHarbourKitchenCustomers,
@@ -23,6 +24,7 @@ export function seedHarbourKitchenInMemoryStores(): void {
   resetDemoIntelligenceStore();
   resetDemoAnalyticsQrScans();
   resetDemoTableStore();
+  resetDemoMenuStore();
 
   loadDemoOrders(buildHarbourKitchenOrders());
   loadDemoReservations(buildHarbourKitchenReservations());

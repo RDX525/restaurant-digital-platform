@@ -5,10 +5,10 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   DEMO_MENU_ID,
-  getDemoFullMenu,
   getDemoMenus,
   isDemoMenuId,
 } from "@/lib/menu/demo-data";
+import { getDemoMenuStore } from "@/lib/menu/demo-store";
 import { isDemoRestaurantId } from "@/lib/restaurant/demo-data";
 import {
   fetchFullMenu,
@@ -83,23 +83,23 @@ async function loadActiveMenuIdPublic(restaurantId: string): Promise<string | nu
 
 async function loadFullMenuPublic(menuId: string): Promise<FullMenu | null> {
   if (isDemoMenuId(menuId) && !isSupabaseConfigured()) {
-    return getDemoFullMenu();
+    return getDemoMenuStore();
   }
 
   if (!isSupabaseConfigured()) {
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   }
 
   try {
     const supabase = createPublicClient();
     if (!supabase) {
-      return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+      return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
     }
     const menu = await fetchFullMenu(supabase, menuId);
     if (menu) return menu;
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   } catch {
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   }
 }
 
@@ -129,20 +129,20 @@ export async function loadPublicMenuById(menuId: string) {
 
 async function loadFullMenuByIdImpl(menuId: string): Promise<FullMenu | null> {
   if (isDemoMenuId(menuId) && !isSupabaseConfigured()) {
-    return getDemoFullMenu();
+    return getDemoMenuStore();
   }
 
   if (!isSupabaseConfigured()) {
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   }
 
   try {
     const supabase = await createClient();
     const menu = await fetchFullMenu(supabase, menuId);
     if (menu) return menu;
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   } catch {
-    return isDemoMenuId(menuId) ? getDemoFullMenu() : null;
+    return isDemoMenuId(menuId) ? getDemoMenuStore() : null;
   }
 }
 

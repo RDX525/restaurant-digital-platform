@@ -424,20 +424,35 @@
   /* Frosted sticky header — light blur on capable desktops only */
   .restaurant-site .rs-header {
     border-bottom-color: transparent;
+    contain: layout style;
+  }
+
+  .restaurant-site .rs-header--solid {
     background: rgba(246, 241, 234, 0.92);
     box-shadow:
       0 1px 0 rgb(255 255 255 / 0.65) inset,
       0 12px 40px -28px rgb(var(--rs-primary) / 0.35);
-    contain: layout style;
+  }
+
+  .restaurant-site .rs-header--overlay {
+    background: linear-gradient(180deg, rgb(0 0 0 / 0.42) 0%, rgb(0 0 0 / 0.12) 70%, transparent 100%);
+    box-shadow: none;
+    border-bottom-color: transparent;
   }
 
   @supports (backdrop-filter: blur(12px)) {
     @media (min-width: 1024px) and (prefers-reduced-transparency: no-preference) {
-      .restaurant-site .rs-header {
+      .restaurant-site .rs-header--solid {
         background: rgba(250, 247, 242, 0.62);
         backdrop-filter: blur(14px) saturate(160%);
         -webkit-backdrop-filter: blur(14px) saturate(160%);
         border-bottom-color: rgb(var(--rs-primary) / 0.06);
+      }
+
+      .restaurant-site .rs-header--overlay {
+        background: linear-gradient(180deg, rgb(0 0 0 / 0.38) 0%, rgb(0 0 0 / 0.08) 75%, transparent 100%);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
       }
     }
   }
@@ -639,6 +654,16 @@
     -webkit-backdrop-filter: blur(10px);
   }
 
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .restaurant-site .menu-item-row:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 1px 0 rgb(255 255 255 / 0.8) inset,
+        0 22px 44px -22px rgb(var(--rs-primary) / 0.42);
+      border-color: rgb(var(--rs-accent) / 0.28);
+    }
+  }
+
   .restaurant-site .public-page-header {
     background:
       radial-gradient(circle at 12% 20%, rgb(var(--rs-primary) / 0.18), transparent 42%),
@@ -702,8 +727,12 @@
       -webkit-backdrop-filter: none;
     }
 
-    .restaurant-site .rs-header {
+    .restaurant-site .rs-header--solid {
       background: rgba(250, 247, 242, 0.96);
+    }
+
+    .restaurant-site .rs-header--overlay {
+      background: linear-gradient(180deg, rgb(0 0 0 / 0.55) 0%, rgb(0 0 0 / 0.2) 80%, transparent 100%);
     }
 
     .restaurant-site .rs-menu-filters,
@@ -776,7 +805,8 @@
   }
 
   .motion-hero-media {
-    transform: scale(1.02);
+    transform: scale(1.06);
+    will-change: transform;
   }
 
   .motion-hero-copy > * {
@@ -784,28 +814,32 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
+    .motion-hero-media {
+      animation: motionHeroDrift 18s ease-out forwards;
+    }
+
     .motion-hero-copy > * {
       opacity: 0;
-      animation: motionHeroIn 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: motionHeroIn 640ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     .motion-hero-copy > *:nth-child(1) {
-      animation-delay: 40ms;
+      animation-delay: 60ms;
     }
     .motion-hero-copy > *:nth-child(2) {
-      animation-delay: 100ms;
+      animation-delay: 140ms;
     }
     .motion-hero-copy > *:nth-child(3) {
-      animation-delay: 160ms;
+      animation-delay: 200ms;
     }
     .motion-hero-copy > *:nth-child(4) {
-      animation-delay: 220ms;
-    }
-    .motion-hero-copy > *:nth-child(5) {
       animation-delay: 280ms;
     }
+    .motion-hero-copy > *:nth-child(5) {
+      animation-delay: 360ms;
+    }
     .motion-hero-copy > *:nth-child(6) {
-      animation-delay: 340ms;
+      animation-delay: 420ms;
     }
   }
 
@@ -953,6 +987,11 @@
 
     .motion-cart-pop {
       animation: none !important;
+    }
+
+    .motion-hero-media {
+      animation: none !important;
+      transform: scale(1.02) !important;
     }
   }
 }

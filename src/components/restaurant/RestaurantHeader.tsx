@@ -24,6 +24,27 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
   const useRootPaths = restaurantUsesRootPaths(pathname, restaurant.slug);
   const platformLoginHref = useRootPaths ? `${getSiteUrl()}/login` : "/login";
   const base = getRestaurantNavBase(restaurant.slug, useRootPaths);
+  const homeHref = base || "/";
+  const isHome = useMemo(
+    () => isRestaurantNavActive(pathname, homeHref, "", restaurant.slug),
+    [pathname, homeHref, restaurant.slug],
+  );
+  const [scrolled, setScrolled] = useState(false);
+  const overlayMode = isHome && !scrolled;
+
+  useEffect(() => {
+    if (!isHome) {
+      setScrolled(false);
+      return;
+    }
+    function onScroll() {
+      setScrolled(window.scrollY > 48);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
+
   const reservationHref = resolveRestaurantPath(
     restaurant,
     restaurant.reservation_url ?? "reservations",
@@ -44,13 +65,17 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
 
   return (
     <header
-      className="rs-header sticky top-0 z-40 border-b"
+      className={cn(
+        "rs-header z-40 transition-[background-color,box-shadow,border-color,backdrop-filter] duration-300",
+        isHome ? "fixed inset-x-0 top-0" : "sticky top-0 border-b",
+        overlayMode ? "rs-header--overlay" : "rs-header--solid",
+      )}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <WebsiteVisitTracker slug={restaurant.slug} />
       <div className="rs-page grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-3 sm:gap-4 sm:py-4 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
         <Link
-          href={base || "/"}
+          href={homeHref}
           aria-label={restaurant.name}
           className="flex min-w-0 items-center gap-3 touch-manipulation"
         >
@@ -61,7 +86,10 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
               width={44}
               height={44}
               sizes="44px"
-              className="h-11 w-11 shrink-0 rounded-full object-cover shadow-soft ring-1 ring-black/5"
+              className={cn(
+                "h-11 w-11 shrink-0 rounded-full object-cover shadow-soft ring-1",
+                overlayMode ? "ring-white/35" : "ring-black/5",
+              )}
             />
           ) : (
             <div
@@ -75,7 +103,12 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
               {restaurant.name.charAt(0)}
             </div>
           )}
-          <span className="hidden min-w-0 truncate font-display text-lg tracking-tight text-pine-900 min-[480px]:inline sm:text-xl">
+          <span
+            className={cn(
+              "hidden min-w-0 truncate font-display text-lg tracking-tight min-[480px]:inline sm:text-xl",
+              overlayMode ? "text-white" : "text-pine-900",
+            )}
+          >
             {restaurant.name}
           </span>
         </Link>
@@ -90,7 +123,9 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
                 "inline-flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium touch-manipulation transition duration-150 xl:px-4",
                 item.active
                   ? "rs-nav-active"
-                  : "text-pine-600 [@media(hover:hover)]:hover:bg-white/55 [@media(hover:hover)]:hover:text-pine-900 [@media(hover:hover)]:hover:shadow-soft",
+                  : overlayMode
+                    ? "text-white/80 [@media(hover:hover)]:hover:bg-white/10 [@media(hover:hover)]:hover:text-white"
+                    : "text-pine-600 [@media(hover:hover)]:hover:bg-white/55 [@media(hover:hover)]:hover:text-pine-900 [@media(hover:hover)]:hover:shadow-soft",
               )}
               aria-current={item.active ? "page" : undefined}
             >
@@ -103,7 +138,10 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
           <Link
             href={platformLoginHref}
             aria-label="Sign in"
-            className="btn-glass inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium sm:px-3.5"
+            className={cn(
+              "inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium sm:px-3.5",
+              overlayMode ? "btn-glass-dark" : "btn-glass",
+            )}
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Sign in</span>
@@ -121,7 +159,10 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
       </div>
 
       <nav
-        className="flex w-full min-w-0 items-stretch gap-0.5 border-t border-black/5 px-1 py-1.5 sm:gap-2 sm:px-6 sm:py-2 xl:hidden"
+        className={cn(
+          "flex w-full min-w-0 items-stretch gap-0.5 px-1 py-1.5 sm:gap-2 sm:px-6 sm:py-2 xl:hidden",
+          overlayMode ? "border-t border-white/10" : "border-t border-black/5",
+        )}
         aria-label="Primary"
       >
         {navItems.map((item) => (
@@ -131,7 +172,11 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
             prefetch
             className={cn(
               "inline-flex min-h-11 min-w-0 flex-1 basis-0 items-center justify-center rounded-full px-0.5 text-center text-[11px] font-medium leading-tight touch-manipulation sm:px-3 sm:text-sm",
-              item.active ? "rs-nav-active" : "text-pine-700",
+              item.active
+                ? "rs-nav-active"
+                : overlayMode
+                  ? "text-white/85"
+                  : "text-pine-700",
             )}
             aria-current={item.active ? "page" : undefined}
           >

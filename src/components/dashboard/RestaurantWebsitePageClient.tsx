@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardShell } from "@/components/platform/DashboardShell";
+import { DashboardResourceGate } from "@/components/dashboard/DashboardResourceGate";
 import { RestaurantSettingsEditor } from "@/components/restaurant/RestaurantSettingsEditor";
 import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
 
@@ -12,13 +13,9 @@ export function RestaurantWebsitePageClient() {
       title="Website"
       subtitle="Branding, content, and publishing for your public restaurant site."
     >
-      {loading ? (
-        <p className="text-sm text-pine-600">Loading your restaurant…</p>
-      ) : error || !restaurantId ? (
-        <p className="text-sm text-red-600">{error ?? "No restaurant found."}</p>
-      ) : (
-        <RestaurantSettingsEditor restaurantId={restaurantId} />
-      )}
+      <DashboardResourceGate loading={loading} error={error} ready={Boolean(restaurantId)}>
+        <RestaurantSettingsEditor restaurantId={restaurantId!} />
+      </DashboardResourceGate>
     </DashboardShell>
   );
 }

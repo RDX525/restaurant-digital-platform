@@ -30,7 +30,7 @@ async function resolveViaJoins(type: string, id: string): Promise<string> {
       .eq("id", id)
       .maybeSingle();
     const category = data?.menu_categories as
-      | { menus?: { restaurant_id?: string } }
+      | { menu_id?: string; menus?: { restaurant_id?: string } }
       | null
       | undefined;
     const restaurantId = category?.menus?.restaurant_id;

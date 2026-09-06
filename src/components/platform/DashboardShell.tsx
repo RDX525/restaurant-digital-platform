@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPrefixRouteActive } from "@/lib/nav/active";
-import { useActiveRestaurant } from "@/hooks/useActiveRestaurant";
+import { useActiveRestaurant, type ActiveRestaurant } from "@/hooks/useActiveRestaurant";
 import { PlatformBrand } from "@/components/platform/PlatformBrand";
 
 const NAV = [
@@ -111,11 +111,18 @@ function DashboardNavLink({
   );
 }
 
-export function DashboardChrome({ children }: { children: React.ReactNode }) {
+export function DashboardChrome({
+  children,
+  initialRestaurant = null,
+}: {
+  children: React.ReactNode;
+  initialRestaurant?: ActiveRestaurant | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { restaurantSlug, hasPermission, loading: restaurantLoading } = useActiveRestaurant();
+  const { restaurantSlug, hasPermission, loading: restaurantLoading } =
+    useActiveRestaurant(initialRestaurant);
 
   useEffect(() => {
     setMobileNavOpen(false);

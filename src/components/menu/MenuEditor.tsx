@@ -29,7 +29,7 @@ import type {
   MenuCategoryWithItems,
   MenuItemWithModifiers,
 } from "@/lib/menu/types";
-import { formatPrice, getErrorMessage, joinCommaList, parseCommaList } from "@/lib/utils";
+import { formatPrice, getErrorMessage, joinCommaList, parseCommaList, cn } from "@/lib/utils";
 
 interface MenuEditorProps {
   menuId: string;
@@ -55,10 +55,27 @@ export function MenuEditor({ menuId }: MenuEditorProps) {
     try {
       await action();
       setMessage(success);
-      await reload();
+      await reload({ silent: true });
     } catch (err) {
       setActionError(getErrorMessage(err));
     }
+  }
+
+  const refreshQuietly = () => reload({ silent: true });
+
+  function patchItemFlags(itemId: string, flags: ItemStatusFlags) {
+    setMenu((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        categories: current.categories.map((category) => ({
+          ...category,
+          items: category.items.map((entry) =>
+            entry.id === itemId ? { ...entry, ...flags } : entry,
+          ),
+        })),
+      };
+    });
   }
 
   async function handleSaveMenu() {
@@ -214,7 +231,8 @@ export function MenuEditor({ menuId }: MenuEditorProps) {
           renderItem={(category) => (
             <CategoryEditor
               category={category}
-              onChange={reload}
+              onChange={refreshQuietly}
+              onPatchFlags={patchItemFlags}
               onError={setActionError}
               onMessage={setMessage}
             />
@@ -229,11 +247,13 @@ export function MenuEditor({ menuId }: MenuEditorProps) {
 function CategoryEditor({
   category,
   onChange,
+  onPatchFlags,
   onError,
   onMessage,
 }: {
   category: MenuCategoryWithItems;
   onChange: () => Promise<void>;
+  onPatchFlags: (itemId: string, flags: ItemStatusFlags) => void;
   onError: (value: string) => void;
   onMessage: (value: string) => void;
 }) {
@@ -331,21 +351,74 @@ function CategoryEditor({
           }, "Items reordered");
         }}
         renderItem={(item) => (
-          <ItemEditor item={item} onChange={onChange} onError={onError} onMessage={onMessage} />
+          <ItemEditor
+            item={item}
+            onChange={onChange}
+            onPatchFlags={onPatchFlags}
+            onError={onError}
+            onMessage={onMessage}
+          />
         )}
       />
     </div>
   );
 }
 
+type StockStatus = "available" | "sold_out";
+
+type ItemStatusFlags = {
+  is_available: boolean;
+  is_sold_out: boolean;
+  is_popular: boolean;
+  is_recommended: boolean;
+};
+
+function deriveStockStatus(flags: ItemStatusFlags): StockStatus {
+  return flags.is_sold_out ? "sold_out" : "available";
+}
+
+function StatusChoiceButton({
+  label,
+  selected,
+  disabled,
+  role = "radio",
+  onSelect,
+}: {
+  label: string;
+  selected: boolean;
+  disabled: boolean;
+  role?: "radio" | "checkbox";
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role={role}
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onSelect}
+      className={cn(
+        "rounded-xl border px-3.5 py-2.5 text-sm font-semibold transition",
+        selected
+          ? "border-pine-800 bg-pine-900 text-white shadow-soft"
+          : "border-pine-900/10 bg-white text-pine-800 hover:border-pine-900/20 hover:bg-cream-50",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 function ItemEditor({
   item,
   onChange,
+  onPatchFlags,
   onError,
   onMessage,
 }: {
   item: MenuItemWithModifiers;
   onChange: () => Promise<void>;
+  onPatchFlags: (itemId: string, flags: ItemStatusFlags) => void;
   onError: (value: string) => void;
   onMessage: (value: string) => void;
 }) {
@@ -357,6 +430,22 @@ function ItemEditor({
     allergens: joinCommaList(item.allergens),
     dietary_info: joinCommaList(item.dietary_info),
   });
+  const [flags, setFlags] = useState<ItemStatusFlags>(() => ({
+    is_available: item.is_available,
+    is_sold_out: item.is_sold_out,
+    is_popular: item.is_popular,
+    is_recommended: item.is_recommended,
+  }));
+  const [markBusy, setMarkBusy] = useState(false);
+
+  useEffect(() => {
+    setFlags({
+      is_available: item.is_available,
+      is_sold_out: item.is_sold_out,
+      is_popular: item.is_popular,
+      is_recommended: item.is_recommended,
+    });
+  }, [item.is_available, item.is_sold_out, item.is_popular, item.is_recommended]);
 
   async function run(action: () => Promise<unknown>, success: string) {
     onError("");
@@ -369,6 +458,28 @@ function ItemEditor({
       onError(getErrorMessage(err));
     }
   }
+
+  async function applyFlags(nextFlags: ItemStatusFlags, success: string) {
+    if (markBusy) return;
+    const previous = flags;
+    setFlags(nextFlags);
+    onPatchFlags(item.id, nextFlags);
+    setMarkBusy(true);
+    onError("");
+    onMessage("");
+    try {
+      await updateItem(item.id, nextFlags);
+      onMessage(success);
+    } catch (err) {
+      setFlags(previous);
+      onPatchFlags(item.id, previous);
+      onError(getErrorMessage(err));
+    } finally {
+      setMarkBusy(false);
+    }
+  }
+
+  const stock = deriveStockStatus(flags);
 
   return (
     <div className="space-y-3">
@@ -433,6 +544,73 @@ function ItemEditor({
         onUploaded={() => void onChange()}
       />
 
+      <div className="space-y-3 rounded-2xl border border-pine-900/5 bg-cream-50/60 p-3">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pine-500">
+            Availability
+          </p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Availability">
+            <StatusChoiceButton
+              label="Mark available"
+              selected={stock === "available"}
+              disabled={markBusy}
+              onSelect={() => {
+                if (stock === "available") return;
+                void applyFlags(
+                  { ...flags, is_available: true, is_sold_out: false },
+                  "Marked available",
+                );
+              }}
+            />
+            <StatusChoiceButton
+              label="Mark sold out"
+              selected={stock === "sold_out"}
+              disabled={markBusy}
+              onSelect={() => {
+                if (stock === "sold_out") return;
+                void applyFlags(
+                  { ...flags, is_available: false, is_sold_out: true },
+                  "Marked sold out",
+                );
+              }}
+            />
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pine-500">
+            Featured
+          </p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Featured">
+            <StatusChoiceButton
+              label="Mark popular"
+              role="checkbox"
+              selected={flags.is_popular}
+              disabled={markBusy}
+              onSelect={() => {
+                const next = !flags.is_popular;
+                void applyFlags(
+                  { ...flags, is_popular: next },
+                  next ? "Marked popular" : "Unmarked popular",
+                );
+              }}
+            />
+            <StatusChoiceButton
+              label="Mark recommended"
+              role="checkbox"
+              selected={flags.is_recommended}
+              disabled={markBusy}
+              onSelect={() => {
+                const next = !flags.is_recommended;
+                void applyFlags(
+                  { ...flags, is_recommended: next },
+                  next ? "Marked recommended" : "Unmarked recommended",
+                );
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -453,54 +631,6 @@ function ItemEditor({
           }
         >
           Save item
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() =>
-            run(
-              () => updateItem(item.id, { is_available: !item.is_available }),
-              item.is_available ? "Marked unavailable" : "Marked available",
-            )
-          }
-        >
-          {item.is_available ? "Mark unavailable" : "Mark available"}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() =>
-            run(
-              () => updateItem(item.id, { is_sold_out: !item.is_sold_out }),
-              item.is_sold_out ? "Marked in stock" : "Marked sold out",
-            )
-          }
-        >
-          {item.is_sold_out ? "Mark in stock" : "Mark sold out"}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() =>
-            run(
-              () => updateItem(item.id, { is_popular: !item.is_popular }),
-              "Popular flag updated",
-            )
-          }
-        >
-          {item.is_popular ? "Unmark popular" : "Mark popular"}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() =>
-            run(
-              () => updateItem(item.id, { is_recommended: !item.is_recommended }),
-              "Recommended flag updated",
-            )
-          }
-        >
-          {item.is_recommended ? "Unmark recommended" : "Mark recommended"}
         </button>
         <button
           type="button"

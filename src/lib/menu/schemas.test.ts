@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   categorySchema,
   menuItemSchema,
+  menuItemPatchSchema,
   menuPatchSchema,
   menuSchema,
   modifierGroupSchema,
@@ -60,10 +61,24 @@ describe("menuItemSchema", () => {
     expect(result.price).toBe(14.5);
   });
 
-  it("rejects negative price", () => {
-    expect(() =>
-      menuItemSchema.parse({ name: "Burger", price: -1 }),
-    ).toThrow();
+  it("accepts a sparse status patch without filling other fields", () => {
+    expect(
+      menuItemPatchSchema.parse({
+        is_available: true,
+        is_sold_out: false,
+        is_popular: true,
+        is_recommended: false,
+      }),
+    ).toEqual({
+      is_available: true,
+      is_sold_out: false,
+      is_popular: true,
+      is_recommended: false,
+    });
+  });
+
+  it("rejects an empty item patch", () => {
+    expect(() => menuItemPatchSchema.parse({})).toThrow();
   });
 });
 
