@@ -17,8 +17,8 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kāti — Restaurant Platform",
-    template: "%s | Kāti",
+    default: "RR NOVA — Restaurant Platform",
+    template: "%s | RR NOVA",
   },
   description:
     "Premium restaurant websites and menu management for Aotearoa New Zealand hospitality.",

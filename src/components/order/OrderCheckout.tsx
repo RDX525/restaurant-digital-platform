@@ -197,12 +197,12 @@ export function OrderCheckout({ restaurant, menu }: OrderCheckoutProps) {
       setPlacedOrder({ ...order, paymentStatus: "paid" });
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
-          `kati-customer-email:${restaurant.slug}`,
+          `rr-nova-customer-email:${restaurant.slug}`,
           customerPayload.email,
         );
         if (orderHistoryAccessToken) {
           window.sessionStorage.setItem(
-            `kati-order-history-token:${restaurant.slug}:${customerPayload.email}`,
+            `rr-nova-order-history-token:${restaurant.slug}:${customerPayload.email}`,
             orderHistoryAccessToken,
           );
         }
@@ -695,7 +695,7 @@ function PaymentStep({
         </div>
 
         <p className="info-banner mb-5">
-          Card details are handled by our payment provider. Kāti never stores raw card numbers,
+          Card details are handled by our payment provider. RR NOVA never stores raw card numbers,
           expiry dates, or CVC codes.
         </p>
 

@@ -21,7 +21,7 @@ export function PlatformHome() {
               K
             </div>
             <div>
-              <span className="font-display text-xl">Kāti</span>
+              <span className="font-display text-xl">RR NOVA</span>
               <span className="ml-2 hidden text-xs uppercase tracking-[0.2em] text-pine-400 sm:inline">
                 Aotearoa NZ
               </span>
@@ -97,7 +97,7 @@ export function PlatformHome() {
       </main>
 
       <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-pine-500">
-        © {new Date().getFullYear()} Kāti · Crafted for Aotearoa New Zealand
+        © {new Date().getFullYear()} RR NOVA · Crafted for Aotearoa New Zealand
       </footer>
     </div>
   );

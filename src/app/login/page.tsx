@@ -3,9 +3,9 @@ import { LandingHero } from "@/components/platform/LandingHero";
 import { LoginAuthSection } from "@/components/platform/LoginAuthSection";
 
 export const metadata: Metadata = {
-  title: "Sign in — Kāti",
+  title: "Sign in — RR NOVA",
   description:
-    "Sign in to Kāti to manage your restaurant website, menus, orders, and reservations.",
+    "Sign in to RR NOVA to manage your restaurant website, menus, orders, and reservations.",
 };
 
 export default function LoginPage() {

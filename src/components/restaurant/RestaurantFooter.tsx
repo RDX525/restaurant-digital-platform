@@ -92,7 +92,7 @@ export async function RestaurantFooter({ restaurant }: { restaurant: PublicResta
             href={platformLoginHref}
             className="inline-flex min-h-11 items-center rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white/90 transition [@media(hover:hover)]:hover:border-white/40 [@media(hover:hover)]:hover:bg-white/15 [@media(hover:hover)]:hover:text-white"
           >
-            Sign in to Kāti
+            Sign in to RR NOVA
           </Link>
         </p>
         <p className="mt-3">
@@ -101,7 +101,7 @@ export async function RestaurantFooter({ restaurant }: { restaurant: PublicResta
             href={platformLoginHref}
             className="text-white/65 underline-offset-2 transition [@media(hover:hover)]:hover:text-white [@media(hover:hover)]:hover:underline"
           >
-            Kāti
+            RR NOVA
           </Link>
         </p>
       </div>

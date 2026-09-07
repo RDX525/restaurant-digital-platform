@@ -150,13 +150,13 @@ export function AuthPanel({ initialMode }: { initialMode: AuthMode }) {
   const titles = {
     "sign-in": {
       eyebrow: "Welcome back",
-      title: "Sign in to Kāti",
+      title: "Sign in to RR NOVA",
       description: "Manage your menus, website, orders, and guest-facing pages.",
     },
     "sign-up": {
       eyebrow: "Get started",
       title: "Create your account",
-      description: "Set up your restaurant on Kāti in minutes.",
+      description: "Set up your restaurant on RR NOVA in minutes.",
     },
     "forgot-password": {
       eyebrow: "Account recovery",
@@ -274,7 +274,7 @@ export function AuthPanel({ initialMode }: { initialMode: AuthMode }) {
           />
           <SubmitButton loading={loading} label="Create account" />
           <p className="text-center text-xs leading-relaxed text-pine-500">
-            By creating an account, you agree to use Kāti for your restaurant operations.
+            By creating an account, you agree to use RR NOVA for your restaurant operations.
           </p>
         </form>
       ) : null}

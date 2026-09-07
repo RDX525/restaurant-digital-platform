@@ -68,7 +68,7 @@ export function LandingHero() {
           </div>
 
           <p className="mt-auto pt-8 text-xs text-pine-500 animate-fade-in opacity-0 stagger-5" suppressHydrationWarning>
-            © {new Date().getFullYear()} Kāti · Crafted for Aotearoa New Zealand
+            © {new Date().getFullYear()} RR NOVA · Crafted for Aotearoa New Zealand
           </p>
         </div>
       </section>
@@ -138,15 +138,15 @@ function LiveBadge({ pulse = true }: { pulse?: boolean }) {
 function BrandMark() {
   return (
     <Link href="/" className="group inline-flex items-center gap-3">
-      <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-gold font-bold text-pine-950 shadow-glow transition group-hover:scale-105">
-        K
+      <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-gold text-xs font-bold tracking-tight text-pine-950 shadow-glow transition group-hover:scale-105">
+        RR
         <div
           className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/20"
           aria-hidden="true"
         />
       </div>
       <div>
-        <span className="font-display text-2xl tracking-tight">Kāti</span>
+        <span className="font-display text-2xl tracking-tight">RR NOVA</span>
         <span className="ml-2 hidden text-[10px] uppercase tracking-[0.24em] text-pine-400 min-[400px]:inline">
           Aotearoa NZ
         </span>
@@ -244,7 +244,7 @@ function ProductPreviewMockup({ compact = false }: { compact?: boolean }) {
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
           </div>
           <div className="ml-2 flex-1 rounded-lg bg-white/5 px-3 py-1 text-[10px] text-pine-400">
-            demo-restaurant.kati.co.nz
+            demo-restaurant.rr-nova.co.nz
           </div>
         </div>
 

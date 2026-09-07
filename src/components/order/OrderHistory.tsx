@@ -24,7 +24,7 @@ export function OrderHistory({ restaurant }: OrderHistoryProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = window.sessionStorage.getItem(`kati-customer-email:${restaurant.slug}`);
+    const saved = window.sessionStorage.getItem(`rr-nova-customer-email:${restaurant.slug}`);
     if (saved) setEmail(saved);
   }, [restaurant.slug]);
 
@@ -45,7 +45,7 @@ export function OrderHistory({ restaurant }: OrderHistoryProps) {
         restaurantSlug: restaurant.slug,
       });
       const storedToken = window.sessionStorage.getItem(
-        `kati-order-history-token:${restaurant.slug}:${parsedEmail.data}`,
+        `rr-nova-order-history-token:${restaurant.slug}:${parsedEmail.data}`,
       );
       if (storedToken) {
         params.set("accessToken", storedToken);

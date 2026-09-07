@@ -61,7 +61,7 @@ export async function signUpWithEmail(input: {
   if (data.session) {
     return {
       mode: "supabase" as const,
-      message: "Your account is ready. Welcome to Kāti.",
+      message: "Your account is ready. Welcome to RR NOVA.",
     };
   }
 

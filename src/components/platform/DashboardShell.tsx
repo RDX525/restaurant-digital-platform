@@ -222,7 +222,7 @@ export function DashboardChrome({
         >
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <Link href="/dashboard/menus" className="font-display text-lg text-pine-900">
-              Kāti
+              RR NOVA
             </Link>
             <button
               type="button"

@@ -109,10 +109,10 @@ describe("order cart", () => {
   });
 
   it("scopes dine-in carts separately from website carts", () => {
-    expect(cartStorageKey("demo")).toBe("kati-cart:demo");
-    expect(cartStorageKey("demo", "web")).toBe("kati-cart:demo");
+    expect(cartStorageKey("demo")).toBe("rr-nova-cart:demo");
+    expect(cartStorageKey("demo", "web")).toBe("rr-nova-cart:demo");
     expect(cartStorageKey("demo", dineInCartScope("table-1", "session-a"))).toBe(
-      "kati-cart:demo:table:table-1:session:session-a",
+      "rr-nova-cart:demo:table:table-1:session:session-a",
     );
     expect(dineInCartScope("table-1", "session-a")).not.toBe(
       dineInCartScope("table-1", "session-b"),

@@ -1,10 +1,10 @@
 # Payment Architecture (Phase 1)
 
-This document describes how direct ordering payments work in Kāti. The design prioritises **provider swapability**, **webhook-only confirmation**, and **never trusting the browser** for payment success.
+This document describes how direct ordering payments work in RR NOVA. The design prioritises **provider swapability**, **webhook-only confirmation**, and **never trusting the browser** for payment success.
 
 ## Principles
 
-1. **No raw card data** — Card numbers, expiry, and CVC are never sent to or stored by Kāti.
+1. **No raw card data** — Card numbers, expiry, and CVC are never sent to or stored by RR NOVA.
 2. **Webhook-only paid status** — An order is marked `paid` only after a verified provider webhook is processed server-side.
 3. **Provider abstraction** — All providers implement the same interface so Stripe or others can be added later.
 4. **Idempotency** — Order creation and webhook processing are idempotent to prevent duplicate charges or status updates.

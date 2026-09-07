@@ -41,11 +41,11 @@ export function PlatformBrand({
     <>
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center bg-gradient-gold font-bold text-pine-950 shadow-glow transition group-hover:scale-[1.02]",
+          "flex shrink-0 items-center justify-center bg-gradient-gold text-[0.65em] font-bold tracking-tight text-pine-950 shadow-glow transition group-hover:scale-[1.02]",
           styles.icon,
         )}
       >
-        K
+        RR
       </div>
       <div className="min-w-0">
         <span
@@ -55,7 +55,7 @@ export function PlatformBrand({
             isDark ? "text-white" : "text-pine-900",
           )}
         >
-          Kāti
+          RR NOVA
         </span>
         {showTagline ? (
           <span

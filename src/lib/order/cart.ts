@@ -4,13 +4,13 @@ import { calculateOrderTotals } from "./pricing";
 export const DELIVERY_FEE = 5.5;
 
 export function cartStorageKey(slug: string, scope = "web"): string {
-  return scope === "web" ? `kati-cart:${slug}` : `kati-cart:${slug}:${scope}`;
+  return scope === "web" ? `rr-nova-cart:${slug}` : `rr-nova-cart:${slug}:${scope}`;
 }
 
 export function idempotencyStorageKey(slug: string, scope = "web"): string {
   return scope === "web"
-    ? `kati-idempotency:${slug}`
-    : `kati-idempotency:${slug}:${scope}`;
+    ? `rr-nova-idempotency:${slug}`
+    : `rr-nova-idempotency:${slug}:${scope}`;
 }
 
 export function dineInCartScope(tableId: string, sessionId: string): string {

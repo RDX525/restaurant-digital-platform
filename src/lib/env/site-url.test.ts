@@ -25,8 +25,8 @@ describe("getSiteUrl", () => {
 
   it("prefers a public configured site URL over the request origin", () => {
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://kati.example");
-    expect(resolveQrSiteUrl("http://localhost:3002")).toBe("https://kati.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://rr-nova.example");
+    expect(resolveQrSiteUrl("http://localhost:3002")).toBe("https://rr-nova.example");
     vi.unstubAllEnvs();
   });
 });

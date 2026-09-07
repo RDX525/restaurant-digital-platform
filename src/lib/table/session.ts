@@ -1,4 +1,4 @@
-export const TABLE_SESSION_COOKIE = "kati-table-session";
+export const TABLE_SESSION_COOKIE = "rr-nova-table-session";
 export const TABLE_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 
 export function browserHasTableSessionCookie(): boolean {

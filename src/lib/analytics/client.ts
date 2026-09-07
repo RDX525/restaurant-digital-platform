@@ -6,7 +6,7 @@ import type { ClientAnalyticsEventInput } from "./types";
 const trackedOnceKeys = new Set<string>();
 
 function getAnalyticsSessionId(restaurantSlug: string): string {
-  const key = `kati-analytics-session:${restaurantSlug}`;
+  const key = `rr-nova-analytics-session:${restaurantSlug}`;
   if (typeof window === "undefined") return "server";
 
   let sessionId = window.sessionStorage.getItem(key);

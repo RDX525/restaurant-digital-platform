@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   if (!isDemoAuthEnabled()) {
     return NextResponse.json(
-      { error: "Demo sign-in is disabled. Use your Kāti account credentials." },
+      { error: "Demo sign-in is disabled. Use your RR NOVA account credentials." },
       { status: 403 },
     );
   }

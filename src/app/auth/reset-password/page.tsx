@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
           <p className="eyebrow">Secure reset</p>
           <h1 className="mt-2 font-display text-3xl text-pine-900">Choose a new password</h1>
           <p className="mt-2 text-sm text-pine-600">
-            Enter a new password for your Kāti account.
+            Enter a new password for your RR NOVA account.
           </p>
 
           {done ? (

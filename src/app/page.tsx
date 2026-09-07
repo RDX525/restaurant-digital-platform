@@ -3,7 +3,7 @@ import { LandingHero } from "@/components/platform/LandingHero";
 import { LoginAuthSection } from "@/components/platform/LoginAuthSection";
 
 export const metadata: Metadata = {
-  title: "Kāti — Restaurant platform for Aotearoa",
+  title: "RR NOVA — Restaurant platform for Aotearoa",
   description:
     "Premium restaurant websites, live menus, online ordering, and reservations — built for New Zealand hospitality.",
 };
